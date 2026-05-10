@@ -543,355 +543,430 @@
         "forced_lines": [
           "只要还有一个人活着",
           "就要守住阵地"
-        ]
+        ],
+        "max_font_size": 110
       },
       "五不怕 不怕打烂铺 不怕伤亡 不怕困难 不怕疲劳 不怕饥寒": {
         "forced_lines": [
           "五不怕 不怕打烂铺",
           "不怕伤亡 不怕困难",
           "不怕疲劳 不怕饥寒"
-        ]
+        ],
+        "max_font_size": 110
       },
       "一定要把硬骨头啃下来": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 99
       },
       "人打光了也决不后退一步": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 90
       },
       "人在阵地在": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 198
       },
       "克服一切困难": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 165
       },
       "关键时刻要挺身而出": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 110
       },
       "我能挺住 不要说我负了伤": {
         "forced_lines": [
           "我能挺住",
           "不要说我负了伤"
-        ]
+        ],
+        "max_font_size": 142
       },
       "愈坚决愈大胆愈能胜利": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 99
       },
       "上战场没想过要活": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 124
       },
       "誓与阵地共存亡": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "倾家荡产也要干到底": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 110
       },
       "只剩一个人也要完成任务": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 90
       },
       "越困难越要干": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 165
       },
       "就是刀山火海 也要冲上去": {
         "forced_lines": [
           "就是刀山火海",
           "也要冲上去"
-        ]
+        ],
+        "max_font_size": 165
       },
       "只要完成任务 死也光荣": {
         "forced_lines": [
           "只要完成任务",
           "死也光荣"
-        ]
+        ],
+        "max_font_size": 165
       },
       "不要管我 继续冲": {
         "forced_lines": [
           "不要管我",
           "继续冲"
-        ]
+        ],
+        "max_font_size": 200
       },
       "拼了老命 死也要打": {
         "forced_lines": [
           "拼了老命",
           "死也要打"
-        ]
+        ],
+        "max_font_size": 200
       },
       "三不怕 不怕苦 不怕累 不怕死": {
         "forced_lines": [
           "三不怕 不怕苦",
           "不怕累 不怕死"
-        ]
+        ],
+        "max_font_size": 142
       },
       "誓死不后退": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 198
       },
       "只要还有一口气 决不后退半步": {
         "forced_lines": [
           "只要还有一口气",
           "决不后退半步"
-        ]
+        ],
+        "max_font_size": 142
       },
       "重伤不连累别人 轻伤不离开战斗": {
         "forced_lines": [
           "重伤不连累别人",
           "轻伤不离开战斗"
-        ]
+        ],
+        "max_font_size": 142
       },
       "当兵的没一个怕死 怕死就别当兵": {
         "forced_lines": [
           "当兵的没一个怕死",
           "怕死就别当兵"
-        ]
+        ],
+        "max_font_size": 124
       },
       "怕死必定死 要打就冲上去": {
         "forced_lines": [
           "怕死必定死",
           "要打就冲上去"
-        ]
+        ],
+        "max_font_size": 165
       },
       "不能后退 只能前进": {
         "forced_lines": [
           "不能后退",
           "只能前进"
-        ]
+        ],
+        "max_font_size": 200
       },
       "不消灭敌人 决不下火线": {
         "forced_lines": [
           "不消灭敌人",
           "决不下火线"
-        ]
+        ],
+        "max_font_size": 198
       },
       "伤了我的右臂 还有左臂": {
         "forced_lines": [
           "伤了我的右臂",
           "还有左臂"
-        ]
+        ],
+        "max_font_size": 165
       },
       "只要不怕牺牲 没有完不成的任务": {
         "forced_lines": [
           "只要不怕牺牲",
           "没有完不成的任务"
-        ]
+        ],
+        "max_font_size": 124
       },
       "只要肯动脑子 没有做不好的工作": {
         "forced_lines": [
           "只要肯动脑子",
           "没有做不好的工作"
-        ]
+        ],
+        "max_font_size": 124
       },
       "宁可前进一尺 决不后退一寸": {
         "forced_lines": [
           "宁可前进一尺",
           "决不后退一寸"
-        ]
+        ],
+        "max_font_size": 165
       },
       "谁能坚持最后三分钟 就是谁的胜利": {
         "forced_lines": [
           "谁能坚持最后三分钟",
           "就是谁的胜利"
-        ]
+        ],
+        "max_font_size": 110
       },
       "坚决尽到我的一切力量": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 99
       },
       "现在就是死 我也决不离开": {
         "forced_lines": [
           "现在就是死",
           "我也决不离开"
-        ]
+        ],
+        "max_font_size": 165
       },
       "前线不怕流血 后方不怕流汗": {
         "forced_lines": [
           "前线不怕流血",
           "后方不怕流汗"
-        ]
+        ],
+        "max_font_size": 165
       },
       "刺刀拼石头打 坚决完成任务": {
         "forced_lines": [
           "刺刀拼石头打",
           "坚决完成任务"
-        ]
+        ],
+        "max_font_size": 165
       },
       "只要还能动弹 坚决完成任务": {
         "forced_lines": [
           "只要还能动弹",
           "坚决完成任务"
-        ]
+        ],
+        "max_font_size": 165
       },
       "哪怕只剩一人一枪 坚决完成任务": {
         "forced_lines": [
           "哪怕只剩一人一枪",
           "坚决完成任务"
-        ]
+        ],
+        "max_font_size": 124
       },
       "革命必须干到底": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "胜利是拼出来的": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "哪里有枪声 就要扑向哪里": {
         "forced_lines": [
           "哪里有枪声",
           "就要扑向哪里"
-        ]
+        ],
+        "max_font_size": 165
       },
       "不惜一切代价 克服一切困难 完成一切任务": {
         "forced_lines": [
           "不惜一切代价",
           "克服一切困难",
           "完成一切任务"
-        ]
+        ],
+        "max_font_size": 153
       },
       "拼命地打 坚决地打 越猛越好": {
         "forced_lines": [
           "拼命地打 坚决地打",
           "越猛越好"
-        ]
+        ],
+        "max_font_size": 110
       },
       "任务愈是艰巨 我就更加顽强": {
         "forced_lines": [
           "任务愈是艰巨",
           "我就更加顽强"
-        ]
+        ],
+        "max_font_size": 165
       },
       "行军不怕苦 打仗不怕死": {
         "forced_lines": [
           "行军不怕苦",
           "打仗不怕死"
-        ]
+        ],
+        "max_font_size": 198
       },
       "打死不讨饶": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 198
       },
       "不怕一切困难 贡献全部力量": {
         "forced_lines": [
           "不怕一切困难",
           "贡献全部力量"
-        ]
+        ],
+        "max_font_size": 165
       },
       "请把最艰巨的任务交给我": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 90
       },
       "我还能走 不要增加同志负担": {
         "forced_lines": [
           "我还能走",
           "不要增加同志负担"
-        ]
+        ],
+        "max_font_size": 124
       },
       "只有坚持才能胜利": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 124
       },
       "革命战士不装孬": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "三硬 头皮硬 脚底板硬 打仗硬": {
         "forced_lines": [
           "三硬 头皮硬",
           "脚底板硬 打仗硬"
-        ]
+        ],
+        "max_font_size": 124
       },
       "三猛 猛打 猛冲 猛追": {
         "forced_lines": [
           "三猛 猛打",
           "猛冲 猛追"
-        ]
+        ],
+        "max_font_size": 198
       },
       "三必 战必胜 攻必克 打必歼": {
         "forced_lines": [
           "三必",
           "战必胜 攻必克 打必歼"
-        ]
+        ],
+        "max_font_size": 90
       },
       "为人民服务": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 198
       },
       "胜利不骄傲 失利不灰心": {
         "forced_lines": [
           "胜利不骄傲",
           "失利不灰心"
-        ]
+        ],
+        "max_font_size": 198
       },
       "枪摔坏了刀磨好了 赶快给我们任务": {
         "forced_lines": [
           "枪摔坏了刀磨好了",
           "赶快给我们任务"
-        ]
+        ],
+        "max_font_size": 124
       },
       "哪里枪声激烈 同志就在哪里": {
         "forced_lines": [
           "哪里枪声激烈",
           "同志就在哪里"
-        ]
+        ],
+        "max_font_size": 165
       },
       "共产党的部队 有一口气就不下火线": {
         "forced_lines": [
           "共产党的部队",
           "有一口气就不下火线"
         ],
-        "font_scale": 0.9
+        "font_scale": 0.9,
+        "max_font_size": 110
       },
       "坚决干到底": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 198
       },
       "挺过去 只要我们硬就能胜利": {
         "forced_lines": [
           "挺过去",
           "只要我们硬就能胜利"
-        ]
+        ],
+        "max_font_size": 110
       },
       "一切行动听指挥": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "永远跟着共产党": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "誓死捍卫党中央": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "执行命令就是胜利": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 124
       },
       "党叫干啥就干啥": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "任务来了马上行动": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 124
       },
       "想尽一切办法完成任务": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 99
       },
       "指挥到哪打到哪": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "没有命令不能退": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 142
       },
       "保证完成任务": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 165
       },
       "叫打就打 叫走就走": {
         "forced_lines": [
           "叫打就打",
           "叫走就走"
-        ]
+        ],
+        "max_font_size": 200
       },
       "不管任务多艰巨 坚决服从": {
         "forced_lines": [
           "不管任务多艰巨",
           "坚决服从"
-        ]
+        ],
+        "max_font_size": 142
       },
       "对上级的命令从不打折扣": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 90
       },
       "一切服从前线 一切为了前线胜利": {
         "forced_lines": [
           "一切服从前线",
           "一切为了前线胜利"
-        ]
+        ],
+        "max_font_size": 124
       },
       "哪里需要就到哪里去": {
-        "preferred_lines": 1
+        "preferred_lines": 1,
+        "max_font_size": 110
       }
     }
   },

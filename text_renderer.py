@@ -632,6 +632,10 @@ def draw_slogan(
         row3_font_scale = min(max(row3_font_scale, 0.6), 1.0)
         font_size_min = max(int(font_size_min * row3_font_scale), 1)
         font_size_max = max(int(font_size_max * row3_font_scale), font_size_min)
+    tuning_max = tuning.get("max_font_size")
+    if tuning_max is not None:
+        font_size_max = min(font_size_max, max(int(tuning_max), font_size_min))
+
     explicit = slogan_explicit_lines(raw)
     max_lines_cap = int(text_layout["max_lines"])
     region_row1 = bool(use_region and slogan_row == 1)

@@ -27,3 +27,10 @@ Thumbs.db
 *.pdf
 *AccessKey*
 *(2).*
+
+# 批量渲染产物（300 张图）及预览图
+text_region_preview/1/
+text_region_preview/2/
+text_region_preview/3/
+text_region_preview/4/
+text_region_preview/*.png
