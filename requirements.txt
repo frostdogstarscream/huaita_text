@@ -1,0 +1,12 @@
+fastapi==0.136.1
+uvicorn==0.46.0
+opencv-python==4.13.0
+numpy==2.4.4
+Pillow==10.3.0
+requests==2.32.2
+pyserial==3.5
+alibabacloud_oss_v2
+alibabacloud_imageseg20191230
+alibabacloud_credentials
+alibabacloud_tea_openapi
+alibabacloud_tea_util

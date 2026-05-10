@@ -1,0 +1,918 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 10051
+  },
+  "camera": {
+    "selection_mode": "auto_prefer_external",
+    "index": 0,
+    "backend": "CAP_DSHOW",
+    "probe_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "preferred_indices": [
+      2,
+      1,
+      3,
+      4,
+      5,
+      0
+    ],
+    "backend_order": [
+      "CAP_DSHOW",
+      "CAP_ANY",
+      "CAP_MSMF"
+    ],
+    "width": 1280,
+    "height": 720,
+    "fps": 20,
+    "auto_focus": true,
+    "jpeg_quality": 90
+  },
+  "rotation": {
+    "interval_seconds": 5,
+    "rotation_start_time": 1778335944,
+    "slogans": [
+      {
+        "content": "五不怕 不怕打烂铺\n不怕伤亡 不怕困难\n不怕疲劳 不怕饥寒",
+        "row": 3
+      },
+      {
+        "content": "一定要把硬骨头啃下来",
+        "row": 1
+      },
+      {
+        "content": "人打光了也决不后退一步",
+        "row": 1
+      },
+      {
+        "content": "人在阵地在",
+        "row": 1
+      },
+      {
+        "content": "克服一切困难",
+        "row": 1
+      },
+      {
+        "content": "关键时刻要挺身而出",
+        "row": 1
+      },
+      {
+        "content": "我能挺住\n不要说我负了伤",
+        "row": 2
+      },
+      {
+        "content": "愈坚决愈大胆愈能胜利",
+        "row": 1
+      },
+      {
+        "content": "上战场没想过要活",
+        "row": 1
+      },
+      {
+        "content": "誓与阵地共存亡",
+        "row": 1
+      },
+      {
+        "content": "倾家荡产也要干到底",
+        "row": 1
+      },
+      {
+        "content": "只剩一个人也要完成任务",
+        "row": 1
+      },
+      {
+        "content": "越困难越要干",
+        "row": 1
+      },
+      {
+        "content": "就是刀山火海\n也要冲上去",
+        "row": 2
+      },
+      {
+        "content": "只要完成任务\n死也光荣",
+        "row": 2
+      },
+      {
+        "content": "不要管我\n继续冲",
+        "row": 2
+      },
+      {
+        "content": "拼了老命\n死也要打",
+        "row": 2
+      },
+      {
+        "content": "三不怕 不怕苦\n不怕累 不怕死",
+        "row": 2
+      },
+      {
+        "content": "誓死不后退",
+        "row": 1
+      },
+      {
+        "content": "只要还有一口气\n决不后退半步",
+        "row": 2
+      },
+      {
+        "content": "重伤不连累别人\n轻伤不离开战斗",
+        "row": 2
+      },
+      {
+        "content": "当兵的没一个怕死\n怕死就别当兵",
+        "row": 2
+      },
+      {
+        "content": "怕死必定死\n要打就冲上去",
+        "row": 2
+      },
+      {
+        "content": "不能后退\n只能前进",
+        "row": 2
+      },
+      {
+        "content": "只要还有一个人活着\n就要守住阵地",
+        "row": 2
+      },
+      {
+        "content": "不消灭敌人\n决不下火线",
+        "row": 2
+      },
+      {
+        "content": "伤了我的右臂\n还有左臂",
+        "row": 2
+      },
+      {
+        "content": "只要不怕牺牲\n没有完不成的任务",
+        "row": 2
+      },
+      {
+        "content": "只要肯动脑子\n没有做不好的工作",
+        "row": 2
+      },
+      {
+        "content": "宁可前进一尺\n决不后退一寸",
+        "row": 2
+      },
+      {
+        "content": "谁能坚持最后三分钟\n就是谁的胜利",
+        "row": 2
+      },
+      {
+        "content": "坚决尽到我的一切力量",
+        "row": 1
+      },
+      {
+        "content": "现在就是死\n我也决不离开",
+        "row": 2
+      },
+      {
+        "content": "前线不怕流血\n后方不怕流汗",
+        "row": 2
+      },
+      {
+        "content": "刺刀拼石头打\n坚决完成任务",
+        "row": 2
+      },
+      {
+        "content": "只要还能动弹\n坚决完成任务",
+        "row": 2
+      },
+      {
+        "content": "哪怕只剩一人一枪\n坚决完成任务",
+        "row": 2
+      },
+      {
+        "content": "革命必须干到底",
+        "row": 1
+      },
+      {
+        "content": "胜利是拼出来的",
+        "row": 1
+      },
+      {
+        "content": "哪里有枪声\n就要扑向哪里",
+        "row": 2
+      },
+      {
+        "content": "不惜一切代价\n克服一切困难\n完成一切任务",
+        "row": 3
+      },
+      {
+        "content": "拼命地打 坚决地打\n越猛越好",
+        "row": 2
+      },
+      {
+        "content": "任务愈是艰巨\n我就更加顽强",
+        "row": 2
+      },
+      {
+        "content": "行军不怕苦\n打仗不怕死",
+        "row": 2
+      },
+      {
+        "content": "打死不讨饶",
+        "row": 1
+      },
+      {
+        "content": "不怕一切困难\n贡献全部力量",
+        "row": 2
+      },
+      {
+        "content": "请把最艰巨的任务交给我",
+        "row": 1
+      },
+      {
+        "content": "我还能走\n不要增加同志负担",
+        "row": 2
+      },
+      {
+        "content": "只有坚持才能胜利",
+        "row": 1
+      },
+      {
+        "content": "革命战士不装孬",
+        "row": 1
+      },
+      {
+        "content": "三硬 头皮硬\n脚底板硬 打仗硬",
+        "row": 2
+      },
+      {
+        "content": "三猛 猛打\n猛冲 猛追",
+        "row": 2
+      },
+      {
+        "content": "三必\n战必胜 攻必克 打必歼",
+        "row": 2
+      },
+      {
+        "content": "为人民服务",
+        "row": 1
+      },
+      {
+        "content": "胜利不骄傲\n失利不灰心",
+        "row": 2
+      },
+      {
+        "content": "枪摔坏了刀磨好了\n赶快给我们任务",
+        "row": 2
+      },
+      {
+        "content": "哪里枪声激烈\n同志就在哪里",
+        "row": 2
+      },
+      {
+        "content": "共产党的部队\n有一口气就不下火线",
+        "row": 2
+      },
+      {
+        "content": "坚决干到底",
+        "row": 1
+      },
+      {
+        "content": "挺过去\n只要我们硬就能胜利",
+        "row": 2
+      },
+      {
+        "content": "一切行动听指挥",
+        "row": 1
+      },
+      {
+        "content": "永远跟着共产党",
+        "row": 1
+      },
+      {
+        "content": "誓死捍卫党中央",
+        "row": 1
+      },
+      {
+        "content": "执行命令就是胜利",
+        "row": 1
+      },
+      {
+        "content": "党叫干啥就干啥",
+        "row": 1
+      },
+      {
+        "content": "任务来了马上行动",
+        "row": 1
+      },
+      {
+        "content": "想尽一切办法完成任务",
+        "row": 1
+      },
+      {
+        "content": "指挥到哪打到哪",
+        "row": 1
+      },
+      {
+        "content": "没有命令不能退",
+        "row": 1
+      },
+      {
+        "content": "保证完成任务",
+        "row": 1
+      },
+      {
+        "content": "叫打就打\n叫走就走",
+        "row": 2
+      },
+      {
+        "content": "不管任务多艰巨\n坚决服从",
+        "row": 2
+      },
+      {
+        "content": "对上级的命令从不打折扣",
+        "row": 1
+      },
+      {
+        "content": "一切服从前线\n一切为了前线胜利",
+        "row": 2
+      },
+      {
+        "content": "哪里需要就到哪里去",
+        "row": 1
+      }
+    ]
+  },
+  "background_set": {
+    "items": [
+      {
+        "id": "bg_001",
+        "name": "背景一",
+        "path": "html-page/assets/photos/1.jpg",
+        "person_layout": {
+          "target_height_ratio": 0.62,
+          "center_x_ratio": 0.3,
+          "center_y_offset": 12,
+          "bottom_margin": 0
+        },
+        "text_layout": {
+          "top_overlay_height": 340,
+          "max_lines": 3,
+          "font_size_min": 56,
+          "font_size_max": 96,
+          "line_spacing_min": 6,
+          "line_spacing_max": 10,
+          "text_region": {
+            "margin_top_ratio": 0.04,
+            "width_ratio": 0.92,
+            "height_ratio": 0.21,
+            "inner_padding_px": 0
+          },
+          "row2_font_scale": 0.94,
+          "row3_width_ratio": 1.0,
+          "row3_font_scale": 0.78
+        }
+      },
+      {
+        "id": "bg_002",
+        "name": "背景二",
+        "path": "html-page/assets/photos/2.jpg",
+        "person_layout": {
+          "target_height_ratio": 0.56,
+          "center_x_ratio": 0.27,
+          "center_y_offset": 6,
+          "bottom_margin": 0
+        },
+        "text_layout": {
+          "top_overlay_height": 340,
+          "max_lines": 3,
+          "font_size_min": 56,
+          "font_size_max": 96,
+          "line_spacing_min": 6,
+          "line_spacing_max": 10,
+          "text_region": {
+            "margin_top_ratio": 0.04,
+            "width_ratio": 0.92,
+            "height_ratio": 0.21,
+            "inner_padding_px": 0
+          },
+          "row2_font_scale": 0.94,
+          "row3_width_ratio": 1.0,
+          "row3_font_scale": 0.78
+        }
+      },
+      {
+        "id": "bg_003",
+        "name": "背景三",
+        "path": "html-page/assets/photos/3.jpg",
+        "person_layout": {
+          "target_height_ratio": 0.58,
+          "center_x_ratio": 0.36,
+          "center_y_offset": 8,
+          "bottom_margin": 0
+        },
+        "text_layout": {
+          "top_overlay_height": 340,
+          "max_lines": 3,
+          "font_size_min": 56,
+          "font_size_max": 96,
+          "line_spacing_min": 6,
+          "line_spacing_max": 10,
+          "text_region": {
+            "margin_top_ratio": 0.04,
+            "width_ratio": 0.92,
+            "height_ratio": 0.21,
+            "inner_padding_px": 0
+          },
+          "row2_font_scale": 0.94,
+          "row3_width_ratio": 1.0,
+          "row3_font_scale": 0.78
+        }
+      },
+      {
+        "id": "bg_004",
+        "name": "背景四",
+        "path": "html-page/assets/photos/4.jpg",
+        "person_layout": {
+          "target_height_ratio": 0.66,
+          "center_x_ratio": 0.61,
+          "center_y_offset": 10,
+          "bottom_margin": 0
+        },
+        "text_layout": {
+          "top_overlay_height": 340,
+          "max_lines": 3,
+          "font_size_min": 56,
+          "font_size_max": 96,
+          "line_spacing_min": 6,
+          "line_spacing_max": 10,
+          "text_region": {
+            "margin_top_ratio": 0.04,
+            "width_ratio": 0.92,
+            "height_ratio": 0.21,
+            "inner_padding_px": 0
+          },
+          "row2_font_scale": 0.94,
+          "row3_width_ratio": 1.0,
+          "row3_font_scale": 0.78
+        }
+      }
+    ]
+  },
+  "output": {
+    "width": 1080,
+    "height": 1920,
+    "jpeg_quality": 92
+  },
+  "ui": {
+    "kiosk_idle_return_seconds": 30,
+    "select_background_rotate_seconds": 10
+  },
+  "person_layout": {
+    "target_height_ratio": 0.72,
+    "bottom_margin": 0,
+    "center_x_ratio": 0.5,
+    "center_y_offset": 0
+  },
+  "compose": {
+    "top_overlay_height": 340,
+    "overlay_opacity": 120
+  },
+  "matting_api": {
+    "provider": "ali_segment_body",
+    "bucket": "huaita-person-img",
+    "region": "cn-shanghai",
+    "oss_endpoint": "https://oss-cn-shanghai.aliyuncs.com",
+    "imageseg_endpoint": "imageseg.cn-shanghai.aliyuncs.com",
+    "output_dir": "generated/cutouts",
+    "max_image_edge": 2000
+  },
+  "text_style": {
+    "font_size": 108,
+    "top_margin": 50,
+    "line_spacing": 17,
+    "stroke_width": 0,
+    "fill": "#FFEF7A",
+    "stroke_fill": "#D8AE22",
+    "style_mode": "gold_layered",
+    "gold_palette": [
+      "#FFF7B8",
+      "#FFF19A",
+      "#FEE879",
+      "#F9DB58",
+      "#EDC738",
+      "#D8AE22"
+    ],
+    "outline_dark": "#D8AE22",
+    "outline_width": 0,
+    "shadow_color": "#6A4B10",
+    "shadow_offset": [
+      2,
+      3
+    ],
+    "shadow_blur": 4,
+    "shadow_alpha": 56,
+    "highlight_color": "#FFFFFF",
+    "highlight_offset": [
+      0,
+      -1
+    ],
+    "highlight_alpha": 0,
+    "specular_color": "#FFFFFF",
+    "specular_strength": 0,
+    "specular_band_top_ratio": 0.14,
+    "specular_band_height_ratio": 0.14,
+    "inner_glow_color": "#FFF07A",
+    "inner_glow_alpha": 0,
+    "horizontal_scale": 1.0
+  },
+  "text_tuning": {
+    "defaults": {
+      "preferred_lines": 2,
+      "max_width_ratio": 0.82,
+      "auto_break_on_punctuation": true,
+      "balance_weight": 1000,
+      "font_scale": 1.3,
+      "line_priority": [
+        1,
+        2,
+        3
+      ]
+    },
+    "by_slogan": {
+      "只要还有一个人活着 就要守住阵地": {
+        "y_offset": -6,
+        "font_scale": 1.03,
+        "forced_lines": [
+          "只要还有一个人活着",
+          "就要守住阵地"
+        ]
+      },
+      "五不怕 不怕打烂铺 不怕伤亡 不怕困难 不怕疲劳 不怕饥寒": {
+        "forced_lines": [
+          "五不怕 不怕打烂铺",
+          "不怕伤亡 不怕困难",
+          "不怕疲劳 不怕饥寒"
+        ]
+      },
+      "一定要把硬骨头啃下来": {
+        "preferred_lines": 1
+      },
+      "人打光了也决不后退一步": {
+        "preferred_lines": 1
+      },
+      "人在阵地在": {
+        "preferred_lines": 1
+      },
+      "克服一切困难": {
+        "preferred_lines": 1
+      },
+      "关键时刻要挺身而出": {
+        "preferred_lines": 1
+      },
+      "我能挺住 不要说我负了伤": {
+        "forced_lines": [
+          "我能挺住",
+          "不要说我负了伤"
+        ]
+      },
+      "愈坚决愈大胆愈能胜利": {
+        "preferred_lines": 1
+      },
+      "上战场没想过要活": {
+        "preferred_lines": 1
+      },
+      "誓与阵地共存亡": {
+        "preferred_lines": 1
+      },
+      "倾家荡产也要干到底": {
+        "preferred_lines": 1
+      },
+      "只剩一个人也要完成任务": {
+        "preferred_lines": 1
+      },
+      "越困难越要干": {
+        "preferred_lines": 1
+      },
+      "就是刀山火海 也要冲上去": {
+        "forced_lines": [
+          "就是刀山火海",
+          "也要冲上去"
+        ]
+      },
+      "只要完成任务 死也光荣": {
+        "forced_lines": [
+          "只要完成任务",
+          "死也光荣"
+        ]
+      },
+      "不要管我 继续冲": {
+        "forced_lines": [
+          "不要管我",
+          "继续冲"
+        ]
+      },
+      "拼了老命 死也要打": {
+        "forced_lines": [
+          "拼了老命",
+          "死也要打"
+        ]
+      },
+      "三不怕 不怕苦 不怕累 不怕死": {
+        "forced_lines": [
+          "三不怕 不怕苦",
+          "不怕累 不怕死"
+        ]
+      },
+      "誓死不后退": {
+        "preferred_lines": 1
+      },
+      "只要还有一口气 决不后退半步": {
+        "forced_lines": [
+          "只要还有一口气",
+          "决不后退半步"
+        ]
+      },
+      "重伤不连累别人 轻伤不离开战斗": {
+        "forced_lines": [
+          "重伤不连累别人",
+          "轻伤不离开战斗"
+        ]
+      },
+      "当兵的没一个怕死 怕死就别当兵": {
+        "forced_lines": [
+          "当兵的没一个怕死",
+          "怕死就别当兵"
+        ]
+      },
+      "怕死必定死 要打就冲上去": {
+        "forced_lines": [
+          "怕死必定死",
+          "要打就冲上去"
+        ]
+      },
+      "不能后退 只能前进": {
+        "forced_lines": [
+          "不能后退",
+          "只能前进"
+        ]
+      },
+      "不消灭敌人 决不下火线": {
+        "forced_lines": [
+          "不消灭敌人",
+          "决不下火线"
+        ]
+      },
+      "伤了我的右臂 还有左臂": {
+        "forced_lines": [
+          "伤了我的右臂",
+          "还有左臂"
+        ]
+      },
+      "只要不怕牺牲 没有完不成的任务": {
+        "forced_lines": [
+          "只要不怕牺牲",
+          "没有完不成的任务"
+        ]
+      },
+      "只要肯动脑子 没有做不好的工作": {
+        "forced_lines": [
+          "只要肯动脑子",
+          "没有做不好的工作"
+        ]
+      },
+      "宁可前进一尺 决不后退一寸": {
+        "forced_lines": [
+          "宁可前进一尺",
+          "决不后退一寸"
+        ]
+      },
+      "谁能坚持最后三分钟 就是谁的胜利": {
+        "forced_lines": [
+          "谁能坚持最后三分钟",
+          "就是谁的胜利"
+        ]
+      },
+      "坚决尽到我的一切力量": {
+        "preferred_lines": 1
+      },
+      "现在就是死 我也决不离开": {
+        "forced_lines": [
+          "现在就是死",
+          "我也决不离开"
+        ]
+      },
+      "前线不怕流血 后方不怕流汗": {
+        "forced_lines": [
+          "前线不怕流血",
+          "后方不怕流汗"
+        ]
+      },
+      "刺刀拼石头打 坚决完成任务": {
+        "forced_lines": [
+          "刺刀拼石头打",
+          "坚决完成任务"
+        ]
+      },
+      "只要还能动弹 坚决完成任务": {
+        "forced_lines": [
+          "只要还能动弹",
+          "坚决完成任务"
+        ]
+      },
+      "哪怕只剩一人一枪 坚决完成任务": {
+        "forced_lines": [
+          "哪怕只剩一人一枪",
+          "坚决完成任务"
+        ]
+      },
+      "革命必须干到底": {
+        "preferred_lines": 1
+      },
+      "胜利是拼出来的": {
+        "preferred_lines": 1
+      },
+      "哪里有枪声 就要扑向哪里": {
+        "forced_lines": [
+          "哪里有枪声",
+          "就要扑向哪里"
+        ]
+      },
+      "不惜一切代价 克服一切困难 完成一切任务": {
+        "forced_lines": [
+          "不惜一切代价",
+          "克服一切困难",
+          "完成一切任务"
+        ]
+      },
+      "拼命地打 坚决地打 越猛越好": {
+        "forced_lines": [
+          "拼命地打 坚决地打",
+          "越猛越好"
+        ]
+      },
+      "任务愈是艰巨 我就更加顽强": {
+        "forced_lines": [
+          "任务愈是艰巨",
+          "我就更加顽强"
+        ]
+      },
+      "行军不怕苦 打仗不怕死": {
+        "forced_lines": [
+          "行军不怕苦",
+          "打仗不怕死"
+        ]
+      },
+      "打死不讨饶": {
+        "preferred_lines": 1
+      },
+      "不怕一切困难 贡献全部力量": {
+        "forced_lines": [
+          "不怕一切困难",
+          "贡献全部力量"
+        ]
+      },
+      "请把最艰巨的任务交给我": {
+        "preferred_lines": 1
+      },
+      "我还能走 不要增加同志负担": {
+        "forced_lines": [
+          "我还能走",
+          "不要增加同志负担"
+        ]
+      },
+      "只有坚持才能胜利": {
+        "preferred_lines": 1
+      },
+      "革命战士不装孬": {
+        "preferred_lines": 1
+      },
+      "三硬 头皮硬 脚底板硬 打仗硬": {
+        "forced_lines": [
+          "三硬 头皮硬",
+          "脚底板硬 打仗硬"
+        ]
+      },
+      "三猛 猛打 猛冲 猛追": {
+        "forced_lines": [
+          "三猛 猛打",
+          "猛冲 猛追"
+        ]
+      },
+      "三必 战必胜 攻必克 打必歼": {
+        "forced_lines": [
+          "三必",
+          "战必胜 攻必克 打必歼"
+        ]
+      },
+      "为人民服务": {
+        "preferred_lines": 1
+      },
+      "胜利不骄傲 失利不灰心": {
+        "forced_lines": [
+          "胜利不骄傲",
+          "失利不灰心"
+        ]
+      },
+      "枪摔坏了刀磨好了 赶快给我们任务": {
+        "forced_lines": [
+          "枪摔坏了刀磨好了",
+          "赶快给我们任务"
+        ]
+      },
+      "哪里枪声激烈 同志就在哪里": {
+        "forced_lines": [
+          "哪里枪声激烈",
+          "同志就在哪里"
+        ]
+      },
+      "共产党的部队 有一口气就不下火线": {
+        "forced_lines": [
+          "共产党的部队",
+          "有一口气就不下火线"
+        ],
+        "font_scale": 0.9
+      },
+      "坚决干到底": {
+        "preferred_lines": 1
+      },
+      "挺过去 只要我们硬就能胜利": {
+        "forced_lines": [
+          "挺过去",
+          "只要我们硬就能胜利"
+        ]
+      },
+      "一切行动听指挥": {
+        "preferred_lines": 1
+      },
+      "永远跟着共产党": {
+        "preferred_lines": 1
+      },
+      "誓死捍卫党中央": {
+        "preferred_lines": 1
+      },
+      "执行命令就是胜利": {
+        "preferred_lines": 1
+      },
+      "党叫干啥就干啥": {
+        "preferred_lines": 1
+      },
+      "任务来了马上行动": {
+        "preferred_lines": 1
+      },
+      "想尽一切办法完成任务": {
+        "preferred_lines": 1
+      },
+      "指挥到哪打到哪": {
+        "preferred_lines": 1
+      },
+      "没有命令不能退": {
+        "preferred_lines": 1
+      },
+      "保证完成任务": {
+        "preferred_lines": 1
+      },
+      "叫打就打 叫走就走": {
+        "forced_lines": [
+          "叫打就打",
+          "叫走就走"
+        ]
+      },
+      "不管任务多艰巨 坚决服从": {
+        "forced_lines": [
+          "不管任务多艰巨",
+          "坚决服从"
+        ]
+      },
+      "对上级的命令从不打折扣": {
+        "preferred_lines": 1
+      },
+      "一切服从前线 一切为了前线胜利": {
+        "forced_lines": [
+          "一切服从前线",
+          "一切为了前线胜利"
+        ]
+      },
+      "哪里需要就到哪里去": {
+        "preferred_lines": 1
+      }
+    }
+  },
+  "laser_trigger": {
+    "enabled": true,
+    "serial_port": "COM4",
+    "baudrate": 19200,
+    "bytesize": 8,
+    "stopbits": 1,
+    "parity": "N",
+    "timeout_seconds": 0.2,
+    "measure_mode": "continuous_fast_20hz",
+    "trigger_min_cm": 100,
+    "trigger_max_cm": 180,
+    "stable_samples": 3,
+    "stable_delta_cm": 5,
+    "countdown_seconds": 5,
+    "burst_count": 4,
+    "burst_interval_seconds": 0.02,
+    "cooldown_ms": 5000,
+    "require_leave_before_retrigger": true,
+    "leave_min_cm": 180
+  }
+}

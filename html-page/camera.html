@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>淮海战役纪念馆互动拍照</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=20260509-camera-countdown-single-noperson-1" />
+  </head>
+  <body class="page page--camera-fullscreen" data-page="camera-fullscreen">
+    <main class="camera-fullscreen-shell">
+      <section class="camera-fullscreen-stage">
+        <img id="cameraStream" class="camera-fullscreen-media" src="" alt="实时摄像头预览" />
+        <div id="cameraFallback" class="camera-preview-fallback camera-preview-fallback--fullscreen">
+          <strong>摄像头预览未就绪</strong>
+          <span id="cameraFallbackText">正在尝试连接实时视频流</span>
+        </div>
+
+        <div class="camera-overlay camera-overlay--top">
+          <p class="camera-overlay__museum">淮海战役纪念馆</p>
+        </div>
+
+        <div class="camera-overlay camera-overlay--headline">
+          <h1 id="cameraPromptTitle" class="camera-overlay__title">快速准备好</h1>
+          <p id="cameraPromptText" class="camera-overlay__subtitle">倒计时结束立即拍照</p>
+        </div>
+
+        <div class="camera-overlay camera-overlay--countdown">
+          <p id="countdownNumber" class="camera-overlay__number" aria-live="polite"></p>
+          <p id="captureStatus" class="camera-overlay__status">等待拍照</p>
+        </div>
+
+        <div id="cameraTransitionMask" class="camera-transition-mask" aria-live="polite" aria-hidden="true">
+          <p class="camera-transition-mask__title">照片生成完成</p>
+          <p class="camera-transition-mask__subtitle">正在进入选图…</p>
+        </div>
+
+      </section>
+    </main>
+    <script src="/static/app.js?v=20260509-camera-mask-only-text-1"></script>
+  </body>
+</html>

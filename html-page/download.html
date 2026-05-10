@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>下载照片</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=20260509-kiosk-916-cohesion" />
+  </head>
+  <body class="page page--download" data-page="download">
+    <main class="download-main">
+      <header class="download-main__header">
+        <p class="hero-eyebrow">Mobile Download</p>
+        <h1 class="welcome-title welcome-title--compact">下载照片</h1>
+        <p class="welcome-subtitle welcome-subtitle--compact">页面打开后会自动下载，若未成功可点击按钮重试。</p>
+      </header>
+      <p class="download-status" id="status">准备下载中…</p>
+      <img id="photo" class="download-photo" src="" alt="待下载照片" width="800" height="1066" />
+      <p class="download-tip" id="tip"></p>
+      <button type="button" class="btn-save" id="btnSave" hidden>重新下载照片</button>
+    </main>
+    <script src="/static/app.js?v=20260509-kiosk-916-cohesion"></script>
+  </body>
+</html>

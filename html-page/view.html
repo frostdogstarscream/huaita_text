@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>扫码下载照片</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=20260510-view-dark-theme-v7" />
+  </head>
+  <body class="page page--view view--immersive" data-page="view">
+    <div id="viewLoadingOverlay" class="view-loading-overlay is-active" aria-live="polite" aria-hidden="false">
+      <div class="view-loading-overlay__spinner" aria-hidden="true"></div>
+    </div>
+    <main class="kiosk-shell kiosk-shell--view">
+      <header class="view-hero view-hero--immersive">
+        <a class="btn-back" href="javascript:history.back()">返回选图</a>
+        <div class="view-hero__copy">
+          <h1 class="welcome-title welcome-title--compact welcome-title--view-immersive">扫码保存照片</h1>
+        </div>
+      </header>
+
+      <section class="view-stage view-stage--kiosk view-stage--immersive">
+        <img id="preview" src="" alt="" />
+      </section>
+
+      <section class="view-qr-card view-qr-card--immersive">
+        <div class="view-qr-card__copy">
+          <p id="qrHint" class="page-note view-qr-hint">请使用手机扫码下载</p>
+        </div>
+        <div class="view-qr-card__code">
+          <img id="qrImage" class="qr-image qr-image--view-immersive" src="" alt="下载二维码" />
+        </div>
+      </section>
+
+      <footer class="view-footer view-footer--kiosk view-footer--immersive">
+        <p id="viewReturnText" class="countdown-panel__hint">30 秒后自动返回待机页面</p>
+      </footer>
+    </main>
+    <a class="btn-home" href="/kiosk-wait.html" aria-label="返回待机页" title="待机页">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z" />
+      </svg>
+    </a>
+    <script src="/static/app.js?v=20260510-view-dark-theme-v7"></script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>选择纪念照片</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=20260510-select-centerfix-v6" />
+  </head>
+  <body class="page page--select" data-page="select">
+    <main class="kiosk-shell kiosk-shell--select">
+
+      <h1 class="select-title">选择满意的图片</h1>
+
+      <section id="resultGrid" class="photo-grid photo-grid--kiosk" aria-label="候选照片"></section>
+
+      <section class="select-actions">
+        <div class="select-actions__copy">
+          <p class="section-kicker">操作提示</p>
+          <p id="selectActionHint" class="page-note">点击提交即可下载哦</p>
+        </div>
+      </section>
+    </main>
+
+    <a class="btn-home" href="/kiosk-wait.html" aria-label="返回待机页" title="待机页">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z" />
+      </svg>
+    </a>
+    <script src="/static/app.js?v=20260510-select-centerfix-v6"></script>
+  </body>
+</html>

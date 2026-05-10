@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>淮海战役纪念馆互动拍照控制台</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=20260508-hotfix-view-1" />
+  </head>
+  <body class="page page--welcome" data-page="welcome">
+    <main class="control-shell">
+      <section class="control-preview">
+        <div class="control-preview__head">
+          <div>
+            <p class="hero-eyebrow">Control Console</p>
+            <h1 class="welcome-title welcome-title--compact">实时视频预览</h1>
+          </div>
+          <div class="camera-preview-controls">
+            <p id="previewMode" class="camera-preview-mode">正在连接摄像头…</p>
+            <button id="previewFitToggle" class="preview-fit-toggle" type="button">切换为铺满</button>
+          </div>
+        </div>
+        <div class="camera-preview-stage camera-preview-stage--portrait control-preview__stage">
+          <img id="cameraStream" class="camera-preview-media" src="" alt="实时摄像头预览" />
+          <div id="cameraFallback" class="camera-preview-fallback">
+            <strong>摄像头预览未就绪</strong>
+            <span id="cameraFallbackText">正在尝试连接实时视频流</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="control-panel">
+        <header class="control-hero">
+          <p class="hero-eyebrow">Huaihai Memorial</p>
+          <h2 class="welcome-title welcome-title--compact">互动拍照控制面板</h2>
+          <p class="welcome-subtitle welcome-subtitle--compact">在此页面中可查看设备状态、同步标语、手动拍照，并进入全屏预览页。</p>
+        </header>
+
+        <section class="control-grid">
+          <article class="control-card">
+            <p class="section-kicker">设备状态</p>
+            <div class="control-metric">
+              <span class="control-metric__label">摄像头</span>
+              <strong id="cameraText" class="control-metric__value">读取中…</strong>
+            </div>
+            <div class="control-metric">
+              <span class="control-metric__label">激光触发</span>
+              <strong id="laserText" class="control-metric__value">读取中…</strong>
+            </div>
+          </article>
+
+          <article class="control-card">
+            <p class="section-kicker">当前标语</p>
+            <h3 id="currentSlogan" class="control-slogan">读取中…</h3>
+            <p id="countdownText" class="page-note">--</p>
+          </article>
+
+          <article class="control-card control-card--actions">
+            <p class="section-kicker">手动控制</p>
+            <p id="captureStatus" class="page-note control-status">等待拍照</p>
+            <div class="control-actions">
+              <button id="captureButton" class="action-button action-button--primary" type="button">手动拍照</button>
+            </div>
+            <div class="control-sync">
+              <label class="control-sync__label" for="syncSequence">标语序号</label>
+              <div class="control-sync__row">
+                <input id="syncSequence" class="control-sync__input" type="number" min="1" max="75" step="1" value="1" />
+                <button id="syncButton" class="action-button action-button--ghost action-button--compact" type="button">同步标语</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="control-card control-jump">
+            <p class="section-kicker">展项页面</p>
+            <p class="page-note">进入纯净的全屏预览模式，供现场观众进行自动拍照体验。</p>
+            <a class="action-button action-button--secondary action-button--wide" href="/camera.html">进入全屏预览</a>
+          </article>
+        </section>
+      </section>
+    </main>
+    <script src="/static/app.js?v=20260508-hotfix-view-1"></script>
+  </body>
+</html>
