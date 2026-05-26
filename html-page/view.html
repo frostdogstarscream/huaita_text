@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>扫码下载照片</title>
-    <link rel="stylesheet" href="/static/css/styles.css?v=20260510-view-dark-theme-v7" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
   </head>
   <body class="page page--view view--immersive" data-page="view">
     <div id="viewLoadingOverlay" class="view-loading-overlay is-active" aria-live="polite" aria-hidden="false">
@@ -12,7 +12,6 @@
     </div>
     <main class="kiosk-shell kiosk-shell--view">
       <header class="view-hero view-hero--immersive">
-        <a class="btn-back" href="javascript:history.back()">返回选图</a>
         <div class="view-hero__copy">
           <h1 class="welcome-title welcome-title--compact welcome-title--view-immersive">扫码保存照片</h1>
         </div>
@@ -32,6 +31,7 @@
       </section>
 
       <footer class="view-footer view-footer--kiosk view-footer--immersive">
+        <a class="btn-back btn-back--bottom" href="javascript:history.back()">返回选图</a>
         <p id="viewReturnText" class="countdown-panel__hint">30 秒后自动返回待机页面</p>
       </footer>
     </main>
@@ -40,6 +40,6 @@
         <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z" />
       </svg>
     </a>
-    <script src="/static/app.js?v=20260510-view-dark-theme-v7"></script>
+    <script src="/static/app.js"></script>
   </body>
 </html>

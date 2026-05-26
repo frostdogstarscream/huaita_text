@@ -59,12 +59,16 @@ try {
     $InternalRoot = Join-Path $FinalRoot "_internal"
     $InternalConfig = Join-Path $InternalRoot "config.json"
     $InternalFrontend = Join-Path $InternalRoot "html-page"
+    $InternalFonts = Join-Path $InternalRoot "fonts"
 
     if (Test-Path $InternalConfig) {
         Copy-Item -LiteralPath $InternalConfig -Destination (Join-Path $FinalRoot "config.json") -Force
     }
     if (Test-Path $InternalFrontend) {
         Copy-Item -LiteralPath $InternalFrontend -Destination (Join-Path $FinalRoot "html-page") -Recurse -Force
+    }
+    if (Test-Path $InternalFonts) {
+        Copy-Item -LiteralPath $InternalFonts -Destination (Join-Path $FinalRoot "fonts") -Recurse -Force
     }
 
     $GeneratedRoot = Join-Path $FinalRoot "generated"
@@ -76,26 +80,67 @@ try {
 @echo off
 setlocal
 cd /d %~dp0
-start "" http://127.0.0.1:10051/
 huaita_text.exe
 endlocal
 "@
     Set-Content -LiteralPath (Join-Path $FinalRoot "run.bat") -Value $RunBat -Encoding ASCII
+
+    $InstallAutostartBat = @"
+@echo off
+setlocal
+cd /d %~dp0
+huaita_text.exe --autostart apply
+if errorlevel 1 pause
+endlocal
+"@
+    Set-Content -LiteralPath (Join-Path $FinalRoot "install_autostart.bat") -Value $InstallAutostartBat -Encoding ASCII
+
+    $UninstallAutostartBat = @"
+@echo off
+setlocal
+cd /d %~dp0
+huaita_text.exe --autostart uninstall
+if errorlevel 1 pause
+endlocal
+"@
+    Set-Content -LiteralPath (Join-Path $FinalRoot "uninstall_autostart.bat") -Value $UninstallAutostartBat -Encoding ASCII
+
+    $AutostartStatusBat = @"
+@echo off
+setlocal
+cd /d %~dp0
+huaita_text.exe --autostart status
+pause
+endlocal
+"@
+    Set-Content -LiteralPath (Join-Path $FinalRoot "autostart_status.bat") -Value $AutostartStatusBat -Encoding ASCII
 
     $Readme = @"
 Huaita Text EXE Deploy Package
 ==============================
 
 1. Double click run.bat, or run huaita_text.exe directly.
-2. Open http://127.0.0.1:10051/ in a browser if it does not open automatically.
+2. The kiosk GUI opens fullscreen and embeds the local web experience.
 3. config.json and generated\ are read/written beside the EXE.
+4. To enable Windows autostart without administrator permission, set autostart.enabled=true in config.json
+   and run install_autostart.bat, or run huaita_text.exe --autostart apply after changing the config.
+5. Default autostart uses the current user's Startup folder. Set autostart.method=task_scheduler only
+   when Windows Task Scheduler is required; that mode may need administrator permission.
+6. Use uninstall_autostart.bat to remove autostart entries, and autostart_status.bat to inspect them.
 
 Requirements on target machine:
 - Windows camera drivers installed
 - Serial driver installed if using laser trigger
-- Network access to Baidu APIs if body segmentation is required
+- Network access to Suxiaoban image generation and Aliyun Imageseg APIs
 "@
     Set-Content -LiteralPath (Join-Path $FinalRoot "README.txt") -Value $Readme -Encoding UTF8
+
+    $ExePath = Join-Path $FinalRoot "huaita_text.exe"
+    Write-Host "Running package self-test..."
+    & $ExePath --self-test
+    if ($LASTEXITCODE -ne 0) {
+        throw "Package self-test failed."
+    }
 }
 finally {
     Pop-Location

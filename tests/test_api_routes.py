@@ -139,7 +139,7 @@ class TestCaptureEndpoint:
         if response.status_code == 200:
             data = response.json()
             assert "task_id" in data
-            assert data["status"] == "queued"
+            assert data["status"] in ("queued", "processing")
 
     def test_capture_busy_returns_409(self, client, patched_app_state):
         patched_app_state["capture_busy"] = True

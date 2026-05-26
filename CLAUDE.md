@@ -79,8 +79,11 @@ main.py  ←  capture_manager + 所有其他模块（仅路由，不含业务逻
 
 1. `capture_manager.start_capture_task(source)` —— 获取互斥锁，启动守护线程
 2. `capture_manager.process_capture_task(task_id)` —— 摄像头帧 → `image_composer.build_subject_cutout`（上传 OSS → 阿里云 SegmentBody → 下载 RGBA）→ `image_composer.compose_single_variant`（缩放人物、贴入背景、渲染标语文字）→ 保存 1080×1920 JPEG
-3. 激光触发拍照：连拍模式（`burst_count` 张，间隔 `burst_interval_seconds` 秒）
-4. 手动（按钮）拍照：单帧，同样使用轮播背景
+3. **手动/激光统一三阶段并发管线**：
+   - **阶段 1 — 串行采集**：`burst_count`（默认 4）帧依次拍摄，间隔 `burst_interval_seconds`（默认 0.5s）
+   - **阶段 2 — 并行抠图**：`ThreadPoolExecutor(max_workers=burst_count)` → 每个槽位调用 `_cutout_with_fallback()`（3 次重试 + NotFoundFace 跳过 + 原图 RGBA 兜底），**保证每个槽位必定产出 subject，始终 4 张结果**
+   - **阶段 3 — 串行合成**：逐个 `compose_single_variant` + `draw_slogan`，兜底项打 `"error": True` 标记
+   - **容错**：`ali_segment_greenscreen_util.py` 下载 5xx 自动重试 3 次；`_cutout_with_fallback` 重试耗尽用原图兜底；极端失败用纯黑 1080×1920 RGBA 占位
 
 前景人物按边界框裁剪，缩放至输出高度的 `person_layout.target_height_ratio`，通过 `center_x_ratio` + `bottom_margin` + `center_y_offset` 定位。每个背景项可覆盖所有上述参数。
 
@@ -110,15 +113,45 @@ main.py  ←  capture_manager + 所有其他模块（仅路由，不含业务逻
 静态文件从 `html-page/` 通过 FastAPI `StaticFiles` 挂载提供。主要页面：
 - `index.html` —— 控制台，含实时预览、手动拍照按钮、模板轮播显示
 - `camera.html` —— 面向一体机的拍照页面，通过心跳（`/api/camera-page-active`）控制激光触发开关
-- `select.html`、`view.html`、`download.html` —— 背景选择和结果浏览
+- `select.html` —— 四幅合成结果选择页，底部操作提示 + 右下角金色 btn-home 返回按钮
+- `view.html` —— 扫码下载页，顶部标题、中间预览图、底部 QR 码卡片 + 返回按钮 + 倒计时
+- `download.html` —— 背景选择和结果浏览
 
-### 阿里云流水线（`ali/`）
+**页面跳转逻辑**（均由前端 JS 驱动，依赖激光传感器）：
 
-`AliOssSegmentPipeline` 分片上传至 OSS → 获取预签名 URL → 调用 `SegmentBody` API → 下载 RGBA 结果。密钥从环境变量 `ALI_ACCESS_KEY_ID` / `ALI_ACCESS_KEY_SECRET` 读取，详见 `ali/ali_oss_multipart_upload_util.py:25-26`。`config.json` 配置 bucket/region/endpoint。
+| 方向 | 触发条件 | 检测机制 | 时长 |
+|------|----------|----------|------|
+| 等待页 → camera | 人进入激光检测范围（100-180cm） | `initKioskWaitPage()` 每 200ms 轮询 `/api/laser-status`，`person_in_range` 连续 ≥3 次 | ≥600ms |
+| camera → 等待页 | 人离开激光检测范围 | `pollFullscreenState()` 每 500ms 轮询，`person_in_range` 连续为 false ≥8 次 | ≥4s |
+| camera → select | 激光倒计时触发拍照完成 | `syncLaserTaskTransitionByLatestTask()` 每 500ms 轮询 `/api/latest-task`，`status === "completed"` 或 `"timeout"` | — |
+| select → 等待页 | 30s 无操作 | `createIdleReturnController` 监听点击/触摸事件，超时跳转 `/kiosk-wait.html` | 30s |
+| view → select | 30s 无操作或点击返回按钮 | 同上 + 底部返回按钮跳转 `select.html` | 30s |
+
+**缓存策略**：`main.py` 中 `_NoCacheStaticFiles` 子类为所有静态资源响应添加 `Cache-Control: no-cache` 头，`serve_page()` 同样添加。修改 CSS/JS 后无需手动更新版本号，浏览器自动重新验证。
+
+**view.html 布局**（1080×1920 竖屏）：
+- 顶部 pill 形 hero（标题"扫码保存照片"）
+- 中间图片预览（`max-height: 54dvh`）
+- QR 码卡片（暖色渐变背景，金色边框，二维码 180-300px）
+- 底部 pill 形 footer（"返回选图"按钮 + 倒计时文字并排居中）
+- 各区域阴影均已收紧，gap 增大至 1.8rem，不再跨元素重叠
+
+### 抠图管线
+
+两套管线通过 `config.json` → `matting_api.use_seedream` 切换：
+
+| 管线 | 路径 | 流程 |
+|---|---|---|
+| **原版** (`use_seedream: false`) | `ali/` | 输入图 → OSS 上传 → SegmentBody → 下载 RGBA |
+| **Seedream** (`use_seedream: true`) | `ali_seedream/ali/` | 输入图 → [YOLO 本地抠图(关)] → Seedream 绿幕 → 缩放 1999px → OSS 上传 → SegmentBody → 下载 RGBA |
+
+`ali_segment_service.py:_create_pipeline()` 根据开关选择管线，其余代码无感知。Seedream 管线依赖 `pyyaml`、`volcengine-python-sdk[ark]`、`ultralytics`，YOLO/Volcengine 模块在 `__init__` 中按需延迟导入，未启用时不加载。
+
+密钥：`ali/` 和 `ali_seedream/ali/` 各自硬编码 AccessKey。Seedream 的 ARK API Key 在 `ali_seedream/ali/volcengine_segment_greenscreen.py:49`。详细文档见 `ali/README.md`。
 
 ## 重要说明
 
-- 运行测试：`python -m pytest tests/ -v`（当前 38 个测试）
+- 运行测试：`python -m pytest tests/ -v`（当前 169 个测试）
 - 仓库根目录的 `config.json` 是**当前部署的实际生效配置**（不是模板）——包含完整的标语集、背景路径和激光端口
 - `runtime_paths.py` 处理开发模式与冻结模式的区别；任何新增文件路径都应通过 `get_app_paths()` 获取
 - 摄像头自动检测会遍历多个索引和后端（DSHOW、ANY、MSMF），通过 `preferred_indices` 优先选择外接摄像头
@@ -188,3 +221,61 @@ python text_region_preview/batch_render.py
 ## Git
 
 远程仓库：`https://github.com/frostdogstarscream/huaita_text.git`
+
+活跃分支：
+- `feature/concurrent-upload-api-speedup` — 并发管线 + UI 优化 + 兜底机制（已 commit）
+- `feature/test-aliyun-seedream-cutout` — 接入 Seedream 绿幕预处理（基于前一个分支，当前开发中）
+
+## 异常处理
+
+### 自定义异常（5 个）
+
+| 异常类 | 文件:行 | 基类 | 用途 |
+|---|---|---|---|
+| `CaptureBusyError` | `capture_manager.py:21` | `RuntimeError` | 拍照互斥，已有拍照进行中 |
+| `CameraUnavailableError` | `camera_driver.py:9` | `RuntimeError` | 摄像头未启动或不可用 |
+| `FrameUnavailableError` | `camera_driver.py:13` | `RuntimeError` | 帧为 None 或编码失败 |
+| `LaserUnavailableError` | `laser_driver.py:17` | `RuntimeError` | 激光传感器不可用 |
+| `AliSegmentError` | `ali_segment_service.py:12` | `RuntimeError` | 阿里云人像分割失败 |
+
+### FastAPI 路由错误响应
+
+| 路由 | 状态码 | 异常 | 位置 |
+|---|---|---|---|
+| 页面路由 | 404 | 文件不存在 | `main.py:82` |
+| `POST /api/sync-time` | 400 | `TypeError/ValueError`（参数非法） | `main.py:202-207` |
+| `POST /api/capture` | 409 | `CaptureBusyError` | `main.py:226-227` |
+| `GET /api/task/{id}` | 404 | 任务不存在 | `main.py:236` |
+| `GET /api/camera/frame` | 503 | `CameraUnavailableError/FrameUnavailableError` | `main.py:255-256` |
+| `GET /api/qr` | 500 | 任意 Exception（过宽） | `main.py:272-273` |
+
+**缺失**：无全局异常处理器，未预期异常直接返回 Starlette 原生 500。
+
+### 好的实践
+
+**重试与自动恢复**：
+- 摄像头断连后自动重探测所有索引和后端（`camera_driver.py:120-139`），间隔 1s
+- 摄像头 DSHOW 缓冲清理：`_reader_loop` 每次读前 `grab()×3` 丢弃缓冲旧帧，再 `retrieve()` 取最新帧，避免连拍得到相同画面
+- 激光串口断连后重探测 CH340 端口（`laser_driver.py:390-417`），间隔 1s
+- 前端 MJPEG 流 2.2s 超时后降级为 250ms 单帧轮询（`app.js:182-206`）
+- 字体加载 5 级回退：`default.ttf → msyh → simhei → simsun → PIL default`（`text_renderer.py:18-33`）
+- 前端 `resolveSelectTask()` 3 级降级：URL 参数 → sessionStorage → API（`app.js:823-844`）
+
+**渲染降级**：
+- `draw_slogan` 金属字渲染异常时降级为普通 `draw.text()`（`text_renderer.py:797-804`）
+- 配置乱码自动修复：`normalize_mojibake_text`（`config_manager.py:146`）
+
+**资源清理**：
+- `lifespan` finally 块确保停止激光、摄像头（`main.py:57-65`）
+- `process_capture_task` finally 释放互斥锁（`capture_manager.py:162-163`）
+- `_NoCacheStaticFiles` 子类为所有静态资源添加 `Cache-Control: no-cache`，修改 CSS/JS 后浏览器自动重验证，无需手动维护版本号
+
+### 已知缺口（按严重度排序）
+
+1. **阿里云全链路无保护** — `ali/` 流水线（OSS 上传、预签名、SegmentBody、下载）零 try/except。网络超时/5xx/认证失败直接穿透。外部已有 `_cutout_with_fallback` 重试+兜底和下载 5xx 重试，但 OSS 上传、预签名、SegmentBody API 自身无超时配置。
+2. **config 读写无保护** — `load_config()/save_config()`（`config_manager.py:179-197`）无异常处理，JSON 损坏或磁盘满直接崩溃。
+3. **`process_capture_task` 异常过宽** — `except Exception` 不区分可重试错误（网络超时）和致命错误（内存不足），手动模式单张出错整批丢弃。
+4. **图片 I/O 无保护** — `Image.open()/save()` 在合成路径中无 try/except（`image_composer.py:61,91`）。
+5. **前端无熔断** — 摄像头轮询 250ms/次，失败无退避，持续产生无效请求。
+6. **无全局 FastAPI 异常处理器** — 未预期异常直接暴 500 + 堆栈。
+7. **激光触发循环** — `except Exception` 写错误文本后不尝试恢复，守护线程静默停止。

@@ -44,7 +44,10 @@ APP_STATE: dict[str, Any] = {
 
 def persist_laser_serial_port(serial_port: str) -> None:
     APP_STATE["config"]["laser_trigger"]["serial_port"] = serial_port
-    save_config(APP_STATE["config"])
+    try:
+        save_config(APP_STATE["config"])
+    except Exception as exc:
+        APP_STATE["laser_trigger_error"] = f"Failed to persist laser serial port: {exc}"
 
 
 def ensure_directories() -> None:

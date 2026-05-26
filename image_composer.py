@@ -26,7 +26,9 @@ def resize_cover(image: Image.Image, target_size: tuple[int, int]) -> Image.Imag
 
 
 def build_subject_cutout(capture_path: Path, task_id: str) -> Image.Image:
-    matting_service: AliSegmentService = APP_STATE["matting_service"]
+    matting_service = APP_STATE["matting_service"]
+    if matting_service is None:
+        raise AliSegmentError("阿里云分割服务未初始化（缺少 ALI_ACCESS_KEY_ID / ALI_ACCESS_KEY_SECRET 环境变量）")
     cutout_path = CUTOUT_DIR / f"{task_id}.png"
     image = matting_service.segment_image_file(capture_path, cutout_path)
     if image.mode != "RGBA":

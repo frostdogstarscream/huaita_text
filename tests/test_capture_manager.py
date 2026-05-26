@@ -80,7 +80,7 @@ class TestTaskManagement:
         patched_app_state["capture_busy"] = False
         task = start_capture_task(source="manual")
         assert "task_id" in task
-        assert task["status"] == "queued"
+        assert task["status"] in ("queued", "processing")  # daemon 线程可能已开始处理
         assert task["trigger_source"] == "manual"
 
         # Clean up: release the slot since process_capture_task runs in daemon thread

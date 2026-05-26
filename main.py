@@ -6,10 +6,11 @@ from io import BytesIO
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.staticfiles import StaticFiles as _StaticFiles
+from starlette.types import Scope
 
-from ali_segment_service import AliSegmentService
+from ali_segment_service import AliSegmentError, AliSegmentService
 from app_state import (
     APP_STATE,
     FRONTEND_DIR,
@@ -19,7 +20,7 @@ from app_state import (
     persist_laser_serial_port,
 )
 from background_manager import get_background_items
-from camera_driver import CameraDriver, CameraUnavailableError, FrameUnavailableError
+from camera_driver import CameraDriver, CameraFocusUnsupportedError, CameraUnavailableError, FrameUnavailableError
 from capture_manager import (
     CaptureBusyError,
     build_qr_image,
@@ -34,6 +35,16 @@ from slogan_manager import get_rotation_snapshot, set_rotation_to_index
 
 
 # ---------------------------------------------------------------------------
+# Cache-busting: ensure browser always revalidates static assets
+# ---------------------------------------------------------------------------
+class _NoCacheStaticFiles(_StaticFiles):
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
+# ---------------------------------------------------------------------------
 # Module-level initialization (runs once on import)
 # ---------------------------------------------------------------------------
 ensure_directories()
@@ -41,7 +52,11 @@ ensure_kiosk_parchment_background()
 APP_STATE["camera_driver"] = CameraDriver(APP_STATE["config"]["camera"])
 APP_STATE["laser_driver"] = LaserDriver(APP_STATE["config"]["laser_trigger"])
 APP_STATE["laser_driver"].set_serial_port_persist_callback(persist_laser_serial_port)
-APP_STATE["matting_service"] = AliSegmentService(APP_STATE["config"])
+try:
+    APP_STATE["matting_service"] = AliSegmentService(APP_STATE["config"])
+except (AliSegmentError, ValueError) as exc:
+    APP_STATE["matting_service"] = None
+    print(f"[WARN] 阿里云分割服务未初始化：{exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +69,7 @@ async def lifespan(_: FastAPI):
     APP_STATE["laser_trigger_running"] = True
     APP_STATE["laser_trigger_worker"] = threading.Thread(target=laser_trigger_loop, daemon=True)
     APP_STATE["laser_trigger_worker"].start()
+
     try:
         yield
     finally:
@@ -69,8 +85,8 @@ async def lifespan(_: FastAPI):
 # App / static mounts
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Huaita Four Background Composer", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-app.mount("/generated", StaticFiles(directory=OUTPUT_DIR), name="generated")
+app.mount("/static", _NoCacheStaticFiles(directory=FRONTEND_DIR), name="static")
+app.mount("/generated", _StaticFiles(directory=OUTPUT_DIR), name="generated")
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +96,7 @@ def serve_page(name: str) -> FileResponse:
     page = FRONTEND_DIR / name
     if not page.exists():
         raise HTTPException(status_code=404, detail=f"{name} not found")
-    return FileResponse(page)
+    return FileResponse(page, headers={"Cache-Control": "no-cache"})
 
 
 # ---------------------------------------------------------------------------
@@ -246,6 +262,46 @@ def latest_task_status() -> JSONResponse:
 @app.get("/api/camera/status")
 def camera_status() -> JSONResponse:
     return JSONResponse(APP_STATE["camera_driver"].status())
+
+
+@app.get("/api/camera/list")
+def camera_list() -> JSONResponse:
+    driver = APP_STATE["camera_driver"]
+    return JSONResponse({
+        "cameras": driver.list_cameras(),
+        "current_index": driver.selected_index,
+    })
+
+
+@app.post("/api/camera/select")
+async def camera_select(request: Request) -> JSONResponse:
+    data = await request.json()
+    idx = int(data.get("index", 0))
+    return JSONResponse(APP_STATE["camera_driver"].switch_to(idx))
+
+
+@app.get("/api/camera/focus")
+def camera_focus_status() -> JSONResponse:
+    return JSONResponse(APP_STATE["camera_driver"].focus_status())
+
+
+@app.post("/api/camera/focus")
+async def camera_focus_set(request: Request) -> JSONResponse:
+    data = await request.json()
+    auto_focus = data.get("auto_focus") if isinstance(data, dict) else None
+    focus_value = data.get("focus") if isinstance(data, dict) else None
+    try:
+        payload = APP_STATE["camera_driver"].set_focus(
+            auto_focus=None if auto_focus is None else bool(auto_focus),
+            focus=None if focus_value in (None, "") else int(focus_value),
+        )
+    except CameraFocusUnsupportedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except CameraUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid focus value") from exc
+    return JSONResponse(payload)
 
 
 @app.get("/api/camera/frame")

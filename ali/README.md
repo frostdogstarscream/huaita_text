@@ -187,3 +187,46 @@ python ali/ali_oss_test.py
 - 代码中 AccessKey 为明文硬编码，生产环境应改用环境变量或 STS 临时凭证
 - Windows 下 `cv2.imread` 不支持中文路径，用 `np.fromfile(path, dtype=np.uint8)` + `cv2.imdecode(raw, cv2.IMREAD_COLOR)` 替代
 - SegmentBody 要求图片中的人脸/人体区域不小于 64×64 像素
+
+## 项目集成
+
+### 调用链
+
+```
+capture_manager.py          ← 拍照任务调度
+  └─ image_composer.py      ← build_subject_cutout()
+       └─ ali_segment_service.py  ← AliSegmentService（薄封装层）
+            └─ ali/ali_oss_segment_pipeline_util.py  ← AliOssSegmentPipeline
+                 ├── ali_oss_multipart_upload_util.py  → OSS 分片上传
+                 └── ali_segment_greenscreen_util.py   → SegmentBody API
+```
+
+### 串行 → 并发改造（`capture_manager.py` 激光模式）
+
+原始逻辑为单循环内依次执行：拍照 → OSS上传 → SegmentBody → 下载 → 合成，4 张照片完全串行。
+
+改造后激光模式拆为三阶段：
+
+```
+阶段 1 — 串行采集（相机独占）
+阶段 2 — 并行抠图（ThreadPoolExecutor, max_workers=burst_count）
+         4 张照片的 OSS 上传 + SegmentBody 同时发起
+阶段 3 — 串行合成（PIL 本地操作）
+```
+
+总耗时预期从 4×单次抠图时间 降至接近单次抠图时间。
+
+### 线程安全性
+
+整个 `AliOssSegmentPipeline` 实例可在多线程中安全共享：
+
+| 属性 | 共享方式 | 安全性 |
+|---|---|---|
+| `self._uploader` | 只读引用，每次调用用独立 OSS key | 安全 |
+| `self._segmenter` | 只读引用，每次调用独立请求 | 安全 |
+| `self._output_dir` | 不可变 Path | 安全 |
+| `oss.Client` | urllib3 连接池（线程安全） | 安全 |
+| `ImageSegClient` | Tea DSL HTTP 管道（线程安全） | 安全 |
+| `requests.get()` | 模块级函数，连接池线程安全 | 安全 |
+
+每次 `process_and_save()` 调用使用 `uuid.uuid4().hex` 生成唯一的 OSS key 和输出文件名，各线程间无数据交叉。

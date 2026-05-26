@@ -80,13 +80,30 @@ class TestNormalizeTextTree:
 
 class TestDefaultConfig:
     def test_has_required_keys(self):
-        for key in ["server", "camera", "rotation", "background_set", "output",
+        for key in ["server", "autostart", "camera", "rotation", "background_set", "output",
                      "text_style", "text_tuning", "laser_trigger", "matting_api"]:
             assert key in DEFAULT_CONFIG
+
+    def test_autostart_defaults(self):
+        assert DEFAULT_CONFIG["autostart"]["enabled"] is False
+        assert DEFAULT_CONFIG["autostart"]["method"] == "startup_folder"
+        assert DEFAULT_CONFIG["autostart"]["task_name"] == "HuaitaTextKiosk"
+        assert DEFAULT_CONFIG["autostart"]["delay_seconds"] == 10
+        assert DEFAULT_CONFIG["autostart"]["run_level"] == "LIMITED"
+        assert DEFAULT_CONFIG["autostart"]["startup_args"] == []
+
+    def test_camera_logging_defaults(self):
+        assert DEFAULT_CONFIG["camera"]["log_enabled"] is True
+        assert DEFAULT_CONFIG["camera"]["log_path"] == ""
+        assert DEFAULT_CONFIG["camera"]["stale_frame_seconds"] == 5.0
 
     def test_output_dimensions(self):
         assert DEFAULT_CONFIG["output"]["width"] == 1080
         assert DEFAULT_CONFIG["output"]["height"] == 1920
+
+    def test_server_port_fallback_defaults(self):
+        assert DEFAULT_CONFIG["server"]["auto_port_fallback"] is True
+        assert DEFAULT_CONFIG["server"]["port_fallback_attempts"] == 10
 
     def test_background_set_has_four_items(self):
         assert len(DEFAULT_CONFIG["background_set"]["items"]) == 4
@@ -121,3 +138,26 @@ class TestConfigIO:
             assert cfg["server"]["port"] == 8888
             assert cfg["server"]["host"] == "127.0.0.1"  # default preserved
             assert cfg["rotation"]["slogans"] == ["自定义标语"]
+
+    def test_load_backs_up_invalid_json_and_restores_defaults(self, temp_dir):
+        config_path = temp_dir / "config.json"
+        config_path.write_text("{ invalid json", encoding="utf-8")
+
+        with patch("config_manager._config_path", return_value=config_path):
+            cfg = load_config()
+
+        backups = list(temp_dir.glob("config.invalid-*.json"))
+        assert backups
+        assert config_path.exists()
+        assert cfg["server"]["host"] == DEFAULT_CONFIG["server"]["host"]
+        assert "_config_warning" in cfg
+
+    def test_save_config_uses_temp_file_cleanup(self, temp_dir):
+        config_path = temp_dir / "config.json"
+        with patch("config_manager._config_path", return_value=config_path):
+            save_config({"server": {"port": 7777}})
+
+        assert config_path.exists()
+        assert not config_path.with_name("config.json.tmp").exists()
+        saved = json.loads(config_path.read_text(encoding="utf-8"))
+        assert saved["server"]["port"] == 7777

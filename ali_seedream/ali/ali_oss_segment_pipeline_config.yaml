@@ -1,0 +1,20 @@
+﻿# AliOssSegmentPipeline 鏋勯€犲嚱鏁伴厤缃紙涓?``ali_oss_segment_pipeline_util`` 瀵瑰簲锛?
+# 渚濊禆锛歱ip install pyyaml
+
+access_key_id: "${ALIYUN_ACCESS_KEY_ID}"
+access_key_secret: "${ALIYUN_ACCESS_KEY_SECRET}"
+bucket: "huaita-person-img"
+region: "cn-shanghai"
+oss_endpoint: "https://oss-cn-shanghai.aliyuncs.com"
+# 浜哄儚鍒嗗壊鎺ュ叆鐐癸紝鍙暀绌虹敤 SDK 榛樿
+imageseg_endpoint: null
+# 鐩稿椤圭洰鏍圭洰褰曠殑璺緞锛沶ull 琛ㄧず浣跨敤椤圭洰涓?output/
+output_dir: "output"
+# 棰勭鍚?URL 鏈夋晥鏈燂紙绉掞級
+presign_expires_seconds: 3600
+use_yolo_segment: false
+use_volcengine_greenscreen: true
+volcengine_api_key: "${ARK_API_KEY}"
+# 閫侀樋閲屼簯鍒嗗壊鍓嶆渶闀胯竟涓婇檺锛堝儚绱狅級
+ali_segment_max_side: 1999
+

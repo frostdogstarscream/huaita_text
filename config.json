@@ -1,7 +1,17 @@
 {
   "server": {
     "host": "127.0.0.1",
-    "port": 10051
+    "port": 10051,
+    "auto_port_fallback": true,
+    "port_fallback_attempts": 10
+  },
+  "autostart": {
+    "enabled": false,
+    "method": "startup_folder",
+    "task_name": "HuaitaTextKiosk",
+    "delay_seconds": 10,
+    "run_level": "LIMITED",
+    "startup_args": []
   },
   "camera": {
     "selection_mode": "auto_prefer_external",
@@ -24,19 +34,31 @@
       0
     ],
     "backend_order": [
-      "CAP_DSHOW",
       "CAP_ANY",
-      "CAP_MSMF"
+      "CAP_MSMF",
+      "CAP_DSHOW"
     ],
     "width": 1280,
     "height": 720,
     "fps": 20,
-    "auto_focus": true,
-    "jpeg_quality": 90
+    "auto_focus": false,
+    "jpeg_quality": 90,
+    "log_enabled": true,
+    "log_path": "",
+    "stale_frame_seconds": 5.0,
+    "manual_focus": null,
+    "focus_probe_values": [
+      0,
+      50,
+      100,
+      150,
+      200,
+      250
+    ]
   },
   "rotation": {
     "interval_seconds": 5,
-    "rotation_start_time": 1778335944,
+    "rotation_start_time": 1779237426,
     "slogans": [
       {
         "content": "五不怕 不怕打烂铺\n不怕伤亡 不怕困难\n不怕疲劳 不怕饥寒",
@@ -482,7 +504,17 @@
     "oss_endpoint": "https://oss-cn-shanghai.aliyuncs.com",
     "imageseg_endpoint": "imageseg.cn-shanghai.aliyuncs.com",
     "output_dir": "generated/cutouts",
-    "max_image_edge": 2000
+    "max_image_edge": 2000,
+    "use_seedream": false,
+    "use_suxiaoban": true,
+    "suxiaoban": {
+      "api_url": "http://36.150.215.5:18086/llmgate/SE012026000061/v3/images/generations",
+      "authorization": "cVumS#ITKv3jypgcJ2g6E6jqLK&Ud%llTUc#@R$!&Q!0HFysO5szs#Y9DvD7",
+      "model": "doubao-seedream-4-5-251128",
+      "prompt": "图片中占据图片正前方的人是主要目标，只保留图片中的主要目标，将目标整体分割出来，目标边缘不要有虚影或锯齿，最终给我一张只有主要目标人像的绿幕图片，绿幕底色要纯绿（0，255，0）.",
+      "size": "2K",
+      "request_timeout_sec": 180
+    }
   },
   "text_style": {
     "font_size": 108,
@@ -985,7 +1017,7 @@
     "stable_delta_cm": 5,
     "countdown_seconds": 5,
     "burst_count": 4,
-    "burst_interval_seconds": 0.02,
+    "burst_interval_seconds": 0.5,
     "cooldown_ms": 5000,
     "require_leave_before_retrigger": true,
     "leave_min_cm": 180

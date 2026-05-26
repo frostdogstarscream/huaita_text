@@ -2,11 +2,13 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.pytest_tmp/
 .mypy_cache/
 
 venv/
 env/
 .venv/
+.venv-build/
 
 .idea/
 .vscode/
@@ -17,6 +19,7 @@ output/
 generated/
 build/
 dist/
+deploy/
 .claude/
 
 .DS_Store

@@ -36,6 +36,27 @@
     node.appendChild(a);
   }
 
+  function renderAnimatedText(node, text, options) {
+    if (!node) return;
+    var cfg = options || {};
+    var animated = Boolean(cfg.animated);
+    var waveClass = cfg.waveClass || "is-wave";
+    var charClass = cfg.charClass || "animated-text__char";
+    node.textContent = "";
+    node.classList.toggle(waveClass, animated);
+    if (!animated) {
+      node.textContent = text;
+      return;
+    }
+    Array.from(text).forEach(function (char, index) {
+      var span = document.createElement("span");
+      span.className = charClass;
+      span.textContent = char;
+      span.style.setProperty("--wave-index", index);
+      node.appendChild(span);
+    });
+  }
+
   function setCaptureEnabled(enabled) {
     var button = $("captureButton");
     if (button) button.disabled = !enabled;
@@ -278,6 +299,20 @@
     }
 
     try {
+      var cameraList = await jsonFetch("/api/camera/list");
+      var select = $("cameraSelect");
+      if (select && cameraList.cameras && select.options.length === 0) {
+        cameraList.cameras.forEach(function (cam) {
+          var opt = document.createElement("option");
+          opt.value = cam.index;
+          opt.textContent = (cam.working ? "[可用] " : "[离线] ") + cam.name;
+          if (cam.current) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+    } catch (_) {}
+
+    try {
       var health = await jsonFetch("/api/health");
       state.lastCameraReady = cameraReady(health.camera);
       setText("cameraText", formatCameraStatus(health.camera));
@@ -304,7 +339,7 @@
       try {
         var task = await jsonFetch("/api/task/" + encodeURIComponent(taskId));
         if (statusNode) statusNode.textContent = task.message || task.status;
-        if (task.status === "completed") {
+        if (task.status === "completed" || task.status === "timeout") {
           state.manualCaptureInProgress = false;
           sessionStorage.setItem("huaihaiLastTask", JSON.stringify(task));
           location.href = "select.html?task_id=" + encodeURIComponent(taskId);
@@ -363,6 +398,91 @@
     }
   }
 
+  function renderFocusControls(focus) {
+    var panel = $("cameraFocusPanel");
+    var autoToggle = $("autoFocusToggle");
+    var slider = $("manualFocusSlider");
+    var value = $("manualFocusValue");
+    var status = $("focusStatusText");
+    if (!panel || !autoToggle || !slider || !value || !status) return;
+
+    var opened = Boolean(focus && focus.opened);
+    var supported = Boolean(focus && focus.focus_supported);
+    var autoSupported = Boolean(focus && focus.auto_focus_supported);
+    var autoFocus = Boolean(focus && focus.auto_focus);
+    var min = Number.isFinite(Number(focus && focus.focus_min)) ? Number(focus.focus_min) : 0;
+    var max = Number.isFinite(Number(focus && focus.focus_max)) ? Number(focus.focus_max) : 255;
+    var step = Number.isFinite(Number(focus && focus.focus_step)) ? Number(focus.focus_step) : 1;
+    var current = Number.isFinite(Number(focus && focus.focus)) ? Number(focus.focus) : min;
+
+    slider.min = String(min);
+    slider.max = String(max);
+    slider.step = String(step || 1);
+    slider.value = String(Math.min(max, Math.max(min, current)));
+    value.textContent = supported ? String(Math.round(Number(slider.value))) : "--";
+    autoToggle.checked = autoFocus;
+    autoToggle.disabled = !opened || !autoSupported;
+    slider.disabled = !opened || !supported || autoFocus;
+
+    if (!opened) {
+      status.textContent = "Camera is not opened";
+    } else if (!supported) {
+      status.textContent = focus.focus_last_error || "Manual focus is not exposed by this camera driver";
+    } else if (autoFocus) {
+      status.textContent = "Auto focus enabled";
+    } else {
+      status.textContent = "Manual focus " + Math.round(Number(slider.value)) + " / reported " + Math.round(Number(focus.focus_reported || 0));
+    }
+  }
+
+  async function refreshFocusControls() {
+    try {
+      renderFocusControls(await jsonFetch("/api/camera/focus"));
+    } catch (error) {
+      renderFocusControls({
+        opened: false,
+        focus_supported: false,
+        auto_focus_supported: false,
+        focus_last_error: error.message || "Focus status unavailable",
+      });
+    }
+  }
+
+  async function postFocusChange(payload) {
+    var status = $("focusStatusText");
+    if (status) status.textContent = "Applying focus";
+    try {
+      renderFocusControls(await jsonFetch("/api/camera/focus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }));
+    } catch (error) {
+      if (status) status.textContent = error.message || "Focus change failed";
+      await refreshFocusControls();
+    }
+  }
+
+  function initFocusControls() {
+    var autoToggle = $("autoFocusToggle");
+    var slider = $("manualFocusSlider");
+    var value = $("manualFocusValue");
+    if (autoToggle) {
+      autoToggle.addEventListener("change", function () {
+        postFocusChange({ auto_focus: autoToggle.checked });
+      });
+    }
+    if (slider) {
+      slider.addEventListener("input", function () {
+        if (value) value.textContent = slider.value;
+      });
+      slider.addEventListener("change", function () {
+        postFocusChange({ auto_focus: false, focus: Number(slider.value) });
+      });
+    }
+    refreshFocusControls();
+  }
+
   async function initWelcomePage() {
     window.__huaitaWelcomeState = {
       manualCaptureInProgress: false,
@@ -372,8 +492,27 @@
     var cleanupPreview = initCameraPreview();
     var captureButton = $("captureButton");
     var syncButton = $("syncButton");
+    var cameraSelect = $("cameraSelect");
     if (captureButton) captureButton.addEventListener("click", handleCapture);
     if (syncButton) syncButton.addEventListener("click", handleSync);
+    initFocusControls();
+    if (cameraSelect) {
+      cameraSelect.addEventListener("change", function () {
+        var idx = parseInt(cameraSelect.value, 10);
+        if (isNaN(idx)) return;
+        setText("cameraText", "切换中…");
+        jsonFetch("/api/camera/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ index: idx }),
+        }).then(function () {
+          refreshFocusControls();
+          setText("cameraText", "摄像头已切换至 Camera " + idx);
+        }).catch(function (err) {
+          setText("cameraText", "切换失败: " + (err.message || "未知错误"));
+        });
+      });
+    }
     await pollWelcomeState();
     var timer = window.setInterval(pollWelcomeState, 1000);
     window.addEventListener(
@@ -464,7 +603,7 @@
     }
 
     function isLaserTask(task) {
-      return Boolean(task && typeof task === "object" && task.trigger_source === "laser" && task.task_id);
+      return Boolean(task && typeof task === "object" && task.task_id);
     }
 
     function isTaskFromCurrentSession(task) {
@@ -489,16 +628,20 @@
       }
     }
 
+    function setTransitionTitle(text, animated) {
+      renderAnimatedText(transitionMaskTitle, text, {
+        animated: animated,
+        charClass: "camera-transition-mask__char",
+      });
+    }
+
     function enterWorkingTransition(taskId) {
       transitionTaskId = taskId;
       transitionPhase = "working";
       document.body.classList.add("is-transitioning-to-select");
       setTransitionMaskVisible(true);
-      if (typeof cleanupPreview.freezeFrame === "function") {
-        cleanupPreview.freezeFrame();
-      }
-      if (transitionMaskTitle) transitionMaskTitle.textContent = "照片正在生成中";
-      if (transitionMaskSubtitle) transitionMaskSubtitle.textContent = "";
+      setTransitionTitle("照片正在生成中", true);
+      if (transitionMaskSubtitle) transitionMaskSubtitle.textContent = "预计约 30 秒生成完成，请稍候";
       if (titleNode) titleNode.textContent = "";
       if (subtitleNode) subtitleNode.textContent = "";
       if (countdownNode) countdownNode.textContent = "";
@@ -519,7 +662,7 @@
       var tip = message || "未检测到人物";
       document.body.classList.add("is-transitioning-to-select");
       setTransitionMaskVisible(true);
-      if (transitionMaskTitle) transitionMaskTitle.textContent = tip;
+      setTransitionTitle(tip, false);
       if (transitionMaskSubtitle) transitionMaskSubtitle.textContent = "3 秒后返回等待页面";
       if (titleNode) titleNode.textContent = "";
       if (subtitleNode) subtitleNode.textContent = "";
@@ -533,9 +676,9 @@
 
     function shouldRedirectToSelect(task) {
       if (!task || typeof task !== "object") return false;
-      if (task.status !== "completed") return false;
+      if (task.status !== "completed" && task.status !== "timeout") return false;
       if (!isLaserTask(task)) return false;
-      if (!Array.isArray(task.results) || task.results.length <= 0) return false;
+      if (!Array.isArray(task.results) || task.results.length < 0) return false;
       if (!isTaskFromCurrentSession(task)) return false;
       var taskId = String(task.task_id || "");
       if (!taskId || taskId === lastHandledTaskId) return false;
@@ -571,6 +714,17 @@
           }
           return;
         }
+        if (status === "timeout") {
+          // 超时但有部分结果 → 继续进入选图页；无结果 → 显示提示
+          if (transitionTaskId === taskId && (!Array.isArray(task.results) || task.results.length === 0)) {
+            clearTransitionState();
+            if (titleNode) titleNode.textContent = "快速准备好";
+            if (subtitleNode) subtitleNode.textContent = "倒计时结束立即拍照";
+            setText("captureStatus", "当前服务繁忙，请稍后再试");
+            return;
+          }
+          // 有结果，继续走到 shouldRedirectToSelect
+        }
         if (!shouldRedirectToSelect(task)) return;
         if (transitionTaskId && transitionTaskId !== taskId) return;
         redirecting = true;
@@ -583,7 +737,7 @@
         }
         document.body.classList.add("is-transitioning-to-select");
         setTransitionMaskVisible(true);
-        if (transitionMaskTitle) transitionMaskTitle.textContent = "照片生成完成";
+        setTransitionTitle("照片生成完成", false);
         if (transitionMaskSubtitle) transitionMaskSubtitle.textContent = "正在进入选图…";
         if (titleNode) titleNode.textContent = "";
         if (subtitleNode) subtitleNode.textContent = "";
@@ -611,6 +765,7 @@
       if (redirecting || stopped || transitionPhase !== "idle") return;
       try {
         var laser = await jsonFetch("/api/laser-status");
+        if (redirecting || stopped || transitionPhase !== "idle") return;
 
         /* 激光已启用且已连接：连续检测到无人则回待机页 */
         var monitorVacancy =
@@ -729,22 +884,52 @@
   }
 
   function isRenderableTask(task) {
-    return Boolean(
-      task &&
-        task.status === "completed" &&
-        Array.isArray(task.results) &&
-        task.results.length > 0
-    );
+    if (!task || !Array.isArray(task.results)) return false;
+    if (task.status === "completed" || task.status === "timeout") return true;
+    return false;
   }
 
   function renderSelectTask(task, grid) {
     sessionStorage.setItem("huaihaiLastTask", JSON.stringify(task));
     setText("selectSlogan", task.slogan || "当前标语");
+    var results = Array.isArray(task.results) ? task.results : [];
+    var actions = $("selectActions");
+
+    // 按结果数量设置网格布局类
+    var count = results.length;
+    grid.className = "photo-grid photo-grid--kiosk";
+    var variantClass = "";
+    if (count === 0) {
+      variantClass = "photo-grid--empty";
+    } else if (count === 1) {
+      variantClass = "photo-grid--single";
+    } else if (count === 2) {
+      variantClass = "photo-grid--double";
+    } else if (count === 3) {
+      variantClass = "photo-grid--triple";
+    }
+    if (variantClass) grid.classList.add(variantClass);
+
+    // 0 张：错误提示 + 5s 返回等待页
+    if (count === 0) {
+      grid.innerHTML =
+        '<p class="photo-grid__empty-text">当前服务繁忙，请稍后再试</p>' +
+        '<p class="photo-grid__empty-sub">即将返回待机页…</p>';
+      if (actions) actions.style.display = "none";
+      setText("selectStatus", "");
+      window.setTimeout(function () {
+        window.location.href = "/kiosk-wait.html";
+      }, 5000);
+      return;
+    }
+
+    if (actions) actions.style.display = "";
     setText("selectStatus", "请选择一张背景图");
     grid.innerHTML = "";
-    task.results.forEach(function (item, index) {
+    results.forEach(function (item, index) {
       var link = document.createElement("a");
       link.className = "photo-frame";
+      if (item.error) link.classList.add("photo-frame--error");
       link.href = viewHref(item);
       link.innerHTML =
         '<span class="photo-frame__badge">' +
@@ -755,6 +940,9 @@
         '" alt="' +
         (item.background_name || "背景") +
         '">';
+      if (item.error) {
+        link.innerHTML += '<span class="photo-frame__error-badge">未检测到人脸</span>';
+      }
       grid.appendChild(link);
     });
   }
@@ -806,6 +994,7 @@
     items.forEach(function (item, index) {
       var link = document.createElement("a");
       link.className = "photo-frame";
+      if (item.error) link.classList.add("photo-frame--error");
       link.href = viewHref(item);
       link.innerHTML =
         '<span class="photo-frame__badge">' +
@@ -816,6 +1005,9 @@
         '" alt="' +
         (item.background_name || "背景") +
         '">';
+      if (item.error) {
+        link.innerHTML += '<span class="photo-frame__error-badge">未检测到人脸</span>';
+      }
       grid.appendChild(link);
     });
   }
@@ -904,6 +1096,16 @@
     }
 
     attachSelectPhotoToViewTransition(grid);
+
+    var idle = createIdleReturnController({
+      seconds: 30,
+      onTick: function (remaining) {
+        setText("selectActionHint", remaining + " 秒无操作后自动返回待机页面");
+      },
+      onTimeout: function () {
+        location.href = "/kiosk-wait.html";
+      },
+    });
 
     var task = await resolveSelectTask(taskId);
     if (!task) {

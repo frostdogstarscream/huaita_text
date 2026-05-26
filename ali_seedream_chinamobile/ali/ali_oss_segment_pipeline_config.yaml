@@ -1,0 +1,36 @@
+﻿# AliOssSegmentPipeline 鏋勯€犲嚱鏁伴厤缃紙涓?``ali_oss_segment_pipeline_util`` 瀵瑰簲锛?
+# 渚濊禆锛歱ip install pyyaml
+
+access_key_id: "${ALIYUN_ACCESS_KEY_ID}"
+access_key_secret: "${ALIYUN_ACCESS_KEY_SECRET}"
+bucket: "huaita-person-img"
+region: "cn-shanghai"
+oss_endpoint: "https://oss-cn-shanghai.aliyuncs.com"
+# 浜哄儚鍒嗗壊鎺ュ叆鐐癸紝鍙暀绌虹敤 SDK 榛樿
+imageseg_endpoint: null
+# 鐩稿椤圭洰鏍圭洰褰曠殑璺緞锛沶ull 琛ㄧず浣跨敤椤圭洰涓?output/
+output_dir: "output"
+# 棰勭鍚?URL 鏈夋晥鏈燂紙绉掞級
+presign_expires_seconds: 3600
+use_yolo_segment: false
+use_volcengine_greenscreen: false
+# 閫熼攢鐝?llmgate 鍥剧敓鍥撅紱true 鏃舵帓鍦ㄧ伀灞辨楠や箣鍚庯紙閰嶇疆椤瑰搴?SuxiaobanImageGenerationsClient锛?
+use_suxiaoban_greenscreen: true
+suxiaoban_api_url: "https://ai.suxiaoban.com:18000/llmgate/SE012026000061/v3/images/generations"
+suxiaoban_authorization: "${SUXIAOBAN_AUTHORIZATION}"
+suxiaoban_model: "doubao-seedream-4-5-251128"
+suxiaoban_prompt: "淇濇寔浜虹墿涓讳綋涓庢瀯鍥撅紝鐢熸垚涓€寮犲厜绾胯嚜鐒躲€佺粏鑺傛竻鏅扮殑浜哄儚鍥撅紝鑳屾櫙绠€娲併€?
+suxiaoban_response_format: "url"
+suxiaoban_size: "2K"
+suxiaoban_seed: null
+suxiaoban_guidance_scale: null
+suxiaoban_watermark: true
+suxiaoban_optimize_prompt: null
+suxiaoban_sequential_image_generation: "disabled"
+suxiaoban_output_format: null
+suxiaoban_stream: false
+suxiaoban_request_timeout_sec: 180
+volcengine_api_key: "${ARK_API_KEY}"
+# 閫侀樋閲屼簯鍒嗗壊鍓嶆渶闀胯竟涓婇檺锛堝儚绱狅級
+ali_segment_max_side: 1999
+

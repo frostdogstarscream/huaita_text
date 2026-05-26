@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
-阿里云 OSS 分片上传工具：支持本地路径、OpenCV ndarray、PIL Image 输入，
-并在上传前按最长边 2000 像素进行等比缩放。
+闃块噷浜?OSS 鍒嗙墖涓婁紶宸ュ叿锛氭敮鎸佹湰鍦拌矾寰勩€丱penCV ndarray銆丳IL Image 杈撳叆锛?
+骞跺湪涓婁紶鍓嶆寜鏈€闀胯竟 2000 鍍忕礌杩涜绛夋瘮缂╂斁銆?
 """
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ try:
 except ImportError:
     PILImageModule = None  # type: ignore[misc, assignment]
 
-DEFAULT_ACCESS_KEY_ID = os.environ.get("ALI_ACCESS_KEY_ID", "")
-DEFAULT_ACCESS_KEY_SECRET = os.environ.get("ALI_ACCESS_KEY_SECRET", "")
+DEFAULT_ACCESS_KEY_ID = "${ALIYUN_ACCESS_KEY_ID}"
+DEFAULT_ACCESS_KEY_SECRET = "${ALIYUN_ACCESS_KEY_SECRET}"
 DEFAULT_BUCKET = "huaita-person-img"
 DEFAULT_REGION = "cn-shanghai"
 DEFAULT_ENDPOINT = "https://oss-cn-shanghai.aliyuncs.com"
@@ -32,7 +32,7 @@ DEFAULT_MAX_IMAGE_EDGE = 2000
 
 
 class AliOssMultipartUploader:
-    """将本地图片或内存图片分片上传到阿里云 OSS。"""
+    """灏嗘湰鍦板浘鐗囨垨鍐呭瓨鍥剧墖鍒嗙墖涓婁紶鍒伴樋閲屼簯 OSS銆?""
 
     def __init__(
         self,
@@ -45,7 +45,7 @@ class AliOssMultipartUploader:
         max_image_edge: int = DEFAULT_MAX_IMAGE_EDGE,
     ) -> None:
         if not access_key_id or not access_key_secret:
-            raise ValueError("缺少 access_key_id / access_key_secret")
+            raise ValueError("缂哄皯 access_key_id / access_key_secret")
 
         credentials_provider = oss.credentials.StaticCredentialsProvider(
             access_key_id,
@@ -71,7 +71,7 @@ class AliOssMultipartUploader:
 
     def _resize_cv2_ndarray_if_needed(self, arr: np.ndarray) -> np.ndarray:
         if arr.ndim < 2:
-            raise ValueError(f"不支持的 ndarray 形状: {arr.shape}")
+            raise ValueError(f"涓嶆敮鎸佺殑 ndarray 褰㈢姸: {arr.shape}")
         height, width = arr.shape[:2]
         max_edge = max(width, height)
         if max_edge <= self._max_image_edge:
@@ -98,12 +98,12 @@ class AliOssMultipartUploader:
         raw = np.fromfile(path, dtype=np.uint8)
         img = cv2.imdecode(raw, cv2.IMREAD_UNCHANGED)
         if img is None:
-            raise ValueError(f"无法解码本地图片: {path}")
+            raise ValueError(f"鏃犳硶瑙ｇ爜鏈湴鍥剧墖: {path}")
         return img
 
     def _encode_cv2_ndarray_to_bytes(self, arr: np.ndarray) -> bytes:
         if not isinstance(arr, np.ndarray):
-            raise TypeError("应为 numpy.ndarray")
+            raise TypeError("搴斾负 numpy.ndarray")
         img = arr
         if img.dtype != np.uint8:
             img = np.clip(img, 0, 255).astype(np.uint8)
@@ -115,10 +115,10 @@ class AliOssMultipartUploader:
         elif img.ndim == 3 and img.shape[2] == 3:
             ext = ".jpg"
         else:
-            raise ValueError(f"不支持的 ndarray 形状: {img.shape}")
+            raise ValueError(f"涓嶆敮鎸佺殑 ndarray 褰㈢姸: {img.shape}")
         ok, buf = cv2.imencode(ext, img)
         if not ok:
-            raise RuntimeError(f"cv2.imencode 失败: {ext}")
+            raise RuntimeError(f"cv2.imencode 澶辫触: {ext}")
         return buf.tobytes()
 
     def _encode_pil_image_to_bytes(self, im: PILImageType) -> bytes:
@@ -128,7 +128,7 @@ class AliOssMultipartUploader:
         im.save(bio, format=fmt)
         data = bio.getvalue()
         if not data:
-            raise RuntimeError("PIL 编码结果为空")
+            raise RuntimeError("PIL 缂栫爜缁撴灉涓虹┖")
         return data
 
     def _multipart_upload_with_reader(
@@ -151,8 +151,8 @@ class AliOssMultipartUploader:
         upload_id = initiate_result.upload_id
         if verbose:
             print(
-                f"初始化分片上传成功，状态码:{initiate_result.status_code}, "
-                f"请求ID:{initiate_result.request_id}, 上传ID:{upload_id}"
+                f"鍒濆鍖栧垎鐗囦笂浼犳垚鍔燂紝鐘舵€佺爜:{initiate_result.status_code}, "
+                f"璇锋眰ID:{initiate_result.request_id}, 涓婁紶ID:{upload_id}"
             )
 
         part_size = self._part_size
@@ -176,8 +176,8 @@ class AliOssMultipartUploader:
 
             if verbose:
                 print(
-                    f"状态码: {part_result.status_code}, 请求ID: {part_result.request_id}, "
-                    f"分片号: {part_number}, ETag: {part_result.etag}"
+                    f"鐘舵€佺爜: {part_result.status_code}, 璇锋眰ID: {part_result.request_id}, "
+                    f"鍒嗙墖鍙? {part_number}, ETag: {part_result.etag}"
                 )
 
             upload_parts.append(
@@ -203,17 +203,17 @@ class AliOssMultipartUploader:
 
         if verbose:
             print(
-                f"完成分片上传，状态码:{complete_result.status_code}, "
-                f"请求ID:{complete_result.request_id}, "
+                f"瀹屾垚鍒嗙墖涓婁紶锛岀姸鎬佺爜:{complete_result.status_code}, "
+                f"璇锋眰ID:{complete_result.request_id}, "
                 f"Bucket:{complete_result.bucket}, "
                 f"Key:{complete_result.key}, "
-                f"位置:{complete_result.location}, "
+                f"浣嶇疆:{complete_result.location}, "
                 f"ETag:{complete_result.etag}"
             )
 
         url = getattr(complete_result, "location", None) or ""
         if not url:
-            raise RuntimeError("CompleteMultipartUpload 响应中未包含 location，无法得到对象 URL")
+            raise RuntimeError("CompleteMultipartUpload 鍝嶅簲涓湭鍖呭惈 location锛屾棤娉曞緱鍒板璞?URL")
 
         return str(url)
 
@@ -252,11 +252,11 @@ class AliOssMultipartUploader:
         verbose: bool = True,
     ) -> str:
         """
-        将数据来源分片上传至当前 Bucket 的 `object_key`。
+        灏嗘暟鎹潵婧愬垎鐗囦笂浼犺嚦褰撳墠 Bucket 鐨?`object_key`銆?
 
-        `local_path` 可为：
-        - 本地文件路径
-        - OpenCV 常用的 `numpy.ndarray`
+        `local_path` 鍙负锛?
+        - 鏈湴鏂囦欢璺緞
+        - OpenCV 甯哥敤鐨?`numpy.ndarray`
         - `PIL.Image.Image`
         """
         if isinstance(local_path, np.ndarray):
@@ -281,7 +281,7 @@ class AliOssMultipartUploader:
 
         path = Path(local_path)  # type: ignore[arg-type]
         if not path.is_file():
-            raise FileNotFoundError(f"本地文件不存在: {path.resolve()}")
+            raise FileNotFoundError(f"鏈湴鏂囦欢涓嶅瓨鍦? {path.resolve()}")
         decoded = self._decode_local_image_path(path)
         raw = self._encode_cv2_ndarray_to_bytes(decoded)
 
@@ -291,3 +291,4 @@ class AliOssMultipartUploader:
         return self._multipart_upload_with_reader(
             object_key, len(raw), read_part_file, verbose=verbose
         )
+

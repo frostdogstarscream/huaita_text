@@ -1,6 +1,7 @@
 """Configuration loading, merging, normalization, and persistence."""
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,16 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "server": {
         "host": "127.0.0.1",
         "port": 10051,
+        "auto_port_fallback": True,
+        "port_fallback_attempts": 10,
+    },
+    "autostart": {
+        "enabled": False,
+        "method": "startup_folder",
+        "task_name": "HuaitaTextKiosk",
+        "delay_seconds": 10,
+        "run_level": "LIMITED",
+        "startup_args": [],
     },
     "camera": {
         "selection_mode": "auto_prefer_external",
@@ -19,12 +30,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "backend": "CAP_DSHOW",
         "probe_indices": [0, 1, 2, 3, 4, 5],
         "preferred_indices": [2, 1, 3, 4, 5, 0],
-        "backend_order": ["CAP_DSHOW", "CAP_ANY", "CAP_MSMF"],
+        "backend_order": ["CAP_ANY", "CAP_MSMF", "CAP_DSHOW"],
         "width": 1280,
         "height": 720,
         "fps": 20,
         "auto_focus": True,
         "jpeg_quality": 90,
+        "log_enabled": True,
+        "log_path": "",
+        "stale_frame_seconds": 5.0,
     },
     "rotation": {
         "interval_seconds": 30,
@@ -71,6 +85,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "imageseg_endpoint": "imageseg.cn-shanghai.aliyuncs.com",
         "output_dir": "generated/cutouts",
         "max_image_edge": 2000,
+        "use_seedream": False,
+        "use_suxiaoban": False,
+        "suxiaoban": {},
     },
     "text_style": {
         "font_size": 72,
@@ -138,6 +155,18 @@ def _config_path() -> Path:
     return get_app_paths()["config_path"]
 
 
+class ConfigError(RuntimeError):
+    pass
+
+
+class ConfigLoadError(ConfigError):
+    pass
+
+
+class ConfigSaveError(ConfigError):
+    pass
+
+
 def normalize_mojibake_text(value: str) -> str:
     if not value:
         return value
@@ -168,15 +197,59 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
     return merged
 
 
+def _default_config() -> dict[str, Any]:
+    initial = normalize_text_tree(deep_merge(DEFAULT_CONFIG, {}))
+    initial["rotation"]["rotation_start_time"] = int(time.time())
+    return initial
+
+
+def _write_config_json(config_path: Path, config: dict[str, Any]) -> None:
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(normalize_text_tree(config), ensure_ascii=False, indent=2)
+    temp_path = config_path.with_name(f"{config_path.name}.tmp")
+    try:
+        temp_path.write_text(payload, encoding="utf-8")
+        os.replace(temp_path, config_path)
+    except OSError as exc:
+        try:
+            if temp_path.exists():
+                temp_path.unlink()
+        except OSError:
+            pass
+        raise ConfigSaveError(f"Failed to save config: {config_path}") from exc
+
+
+def _backup_unreadable_config(config_path: Path) -> Path | None:
+    if not config_path.exists():
+        return None
+    backup_path = config_path.with_name(f"{config_path.stem}.invalid-{int(time.time())}{config_path.suffix}")
+    try:
+        os.replace(config_path, backup_path)
+    except OSError:
+        return None
+    return backup_path
+
+
 def load_config() -> dict[str, Any]:
     config_path = _config_path()
     if not config_path.exists():
-        initial = normalize_text_tree(deep_merge(DEFAULT_CONFIG, {}))
-        initial["rotation"]["rotation_start_time"] = int(time.time())
-        config_path.write_text(json.dumps(initial, ensure_ascii=False, indent=2), encoding="utf-8")
+        initial = _default_config()
+        _write_config_json(config_path, initial)
         return initial
 
-    raw_source = json.loads(config_path.read_text(encoding="utf-8-sig"))
+    try:
+        raw_source = json.loads(config_path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        backup_path = _backup_unreadable_config(config_path)
+        initial = _default_config()
+        try:
+            _write_config_json(config_path, initial)
+        except ConfigSaveError:
+            raise ConfigLoadError(f"Failed to load config and restore defaults: {config_path}") from exc
+        if backup_path:
+            initial["_config_warning"] = f"Invalid config was backed up to {backup_path.name}"
+        return initial
+
     raw = normalize_text_tree(raw_source)
     config = normalize_text_tree(deep_merge(DEFAULT_CONFIG, raw))
     legacy_compose = raw.get("compose", {})
@@ -188,10 +261,9 @@ def load_config() -> dict[str, Any]:
     if not config["rotation"].get("rotation_start_time"):
         config["rotation"]["rotation_start_time"] = int(time.time())
     if raw != raw_source:
-        config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+        _write_config_json(config_path, config)
     return config
 
 
 def save_config(config: dict[str, Any]) -> None:
-    normalized = normalize_text_tree(config)
-    _config_path().write_text(json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_config_json(_config_path(), config)

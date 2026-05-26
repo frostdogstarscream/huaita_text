@@ -41,6 +41,21 @@
             <div class="control-metric">
               <span class="control-metric__label">摄像头</span>
               <strong id="cameraText" class="control-metric__value">读取中…</strong>
+              <select id="cameraSelect" class="control-select"></select>
+              <div class="control-focus" id="cameraFocusPanel">
+                <div class="control-focus__head">
+                  <span class="control-metric__label">Focus</span>
+                  <label class="control-focus__toggle">
+                    <input id="autoFocusToggle" type="checkbox" />
+                    <span>Auto</span>
+                  </label>
+                </div>
+                <div class="control-focus__row">
+                  <input id="manualFocusSlider" class="control-focus__range" type="range" min="0" max="255" step="1" value="0" />
+                  <output id="manualFocusValue" class="control-focus__value">--</output>
+                </div>
+                <p id="focusStatusText" class="control-focus__status">Focus status loading</p>
+              </div>
             </div>
             <div class="control-metric">
               <span class="control-metric__label">激光触发</span>

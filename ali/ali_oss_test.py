@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# OSS Python SDK V2：分片上传示例，上传成功后下载到项目 output/ 目录
-# 凭证：StaticCredentialsProvider（请勿将密钥提交到版本库）
+# OSS Python SDK V2锛氬垎鐗囦笂浼犵ず渚嬶紝涓婁紶鎴愬姛鍚庝笅杞藉埌椤圭洰 output/ 鐩綍
+# 鍑瘉锛歋taticCredentialsProvider锛堣鍕垮皢瀵嗛挜鎻愪氦鍒扮増鏈簱锛?
 
 import os
 from pathlib import Path
@@ -14,17 +14,17 @@ from ali.ali_oss_multipart_upload_util import AliOssMultipartUploader
 _ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_OUTPUT = _ROOT / "output"
 
-ACCESS_KEY_ID = os.environ.get("ALI_ACCESS_KEY_ID", "")
-ACCESS_KEY_SECRET = os.environ.get("ALI_ACCESS_KEY_SECRET", "")
+ACCESS_KEY_ID = "${ALIYUN_ACCESS_KEY_ID}"
+ACCESS_KEY_SECRET = "${ALIYUN_ACCESS_KEY_SECRET}"
 
 REGION = "cn-shanghai"
 BUCKET = "huaita-person-img"
 ENDPOINT = "https://oss-cn-shanghai.aliyuncs.com"
 OBJECT_KEY = "person_front/dest.jpg"
 LOCAL_FILE_PATH = (
-    r"G:\python_pro\huaita_renxiang\resource\person_front\人像照片_低清_缩放符合阿里输入.jpg"
+    r"G:\python_pro\huaita_renxiang\resource\person_front\浜哄儚鐓х墖_浣庢竻_缂╂斁绗﹀悎闃块噷杈撳叆.jpg"
 )
-# 下载目录；None 表示使用项目 output/
+# 涓嬭浇鐩綍锛汵one 琛ㄧず浣跨敤椤圭洰 output/
 DOWNLOAD_DIR = None
 
 
@@ -37,7 +37,7 @@ def main() -> None:
         endpoint=ENDPOINT,
     )
     public_url = uploader.upload_local_file(LOCAL_FILE_PATH, OBJECT_KEY)
-    print(f"对象 URL: {public_url}")
+    print(f"瀵硅薄 URL: {public_url}")
 
     client = uploader.client
     bucket = BUCKET
@@ -55,8 +55,9 @@ def main() -> None:
         ),
         filepath=str(local_download_path),
     )
-    print(f"下载完成 written: {dl_result.written}, 本地路径: {local_download_path.resolve()}")
+    print(f"涓嬭浇瀹屾垚 written: {dl_result.written}, 鏈湴璺緞: {local_download_path.resolve()}")
 
 
 if __name__ == "__main__":
     main()
+
