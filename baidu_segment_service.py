@@ -13,8 +13,8 @@ class BaiduSegmentError(RuntimeError):
     pass
 
 
-DEMO_BAIDU_API_KEY = "eelQQQCNaabdlZ8hlAVWOkdk"
-DEMO_BAIDU_SECRET_KEY = "GIquqj496DQefeWwHmWXXOmi5kgsPCWr"
+DEMO_BAIDU_API_KEY = os.environ.get("BAIDU_API_KEY", "")
+DEMO_BAIDU_SECRET_KEY = os.environ.get("BAIDU_SECRET_KEY", "")
 
 
 class BaiduSegmentService:

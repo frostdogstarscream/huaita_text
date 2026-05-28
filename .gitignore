@@ -7,9 +7,17 @@ __pycache__/
 venv/
 env/
 .venv/
+.venv-build/
+.venv-modelscope/
+.vendor_py/
+.vendor_lap/
 
 .idea/
 .vscode/
+.cursor/
+.omo/
+.ultralytics/
+
 *.swp
 *.swo
 
@@ -17,7 +25,13 @@ output/
 generated/
 build/
 dist/
+deploy/
+deploy_server/
+deploy.zip
+deploy_laser.zip
 .claude/
+
+models/
 
 .DS_Store
 Thumbs.db
@@ -34,3 +48,13 @@ text_region_preview/2/
 text_region_preview/3/
 text_region_preview/4/
 text_region_preview/*.png
+
+# 第三方源码副本
+MODNet/
+MaGGIe/
+MatAnyone2/
+Ultralytics/
+HuaiHaiJingShenDaiHuiJia/
+HuaiHaiTakePhotoNew/
+code_copyhuaita_textMODNet/
+remote_client_test_*/
