@@ -95,6 +95,30 @@ def get_rotation_snapshot() -> dict[str, Any]:
     }
 
 
+def get_slogan_snapshot_by_sequence_no(sequence_no: int) -> dict[str, Any]:
+    rotation = APP_STATE["config"]["rotation"]
+    slogans = rotation.get("slogans", []) or ["欢迎来到互动拍照区"]
+    if not 1 <= sequence_no <= len(slogans):
+        raise ValueError(f"sequence_no out of range: {sequence_no} (valid: 1-{len(slogans)})")
+    index = sequence_no - 1
+    entry = slogans[index]
+    draw_raw = slogan_draw_text(entry)
+    display = slogan_display_text(entry)
+    if not display:
+        display = draw_raw or "欢迎来到互动拍照区"
+    if not draw_raw:
+        draw_raw = display
+    return {
+        "slogan": display,
+        "slogan_content": draw_raw,
+        "slogan_row": slogan_row_from_entry(entry),
+        "index": index,
+        "sequence_no": sequence_no,
+        "seconds_to_next": 0,
+        "rotation_start_time": 0,
+    }
+
+
 def set_rotation_to_index(target_index: int) -> dict[str, Any]:
     rotation = APP_STATE["config"]["rotation"]
     slogans = rotation.get("slogans", []) or ["欢迎来到互动拍照区"]

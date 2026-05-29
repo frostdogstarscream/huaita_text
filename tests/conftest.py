@@ -86,6 +86,15 @@ def mock_config():
             "output_dir": "generated/cutouts",
             "max_image_edge": 2000,
         },
+        "remote_matting": {
+            "enabled": True,
+            "base_url": "http://127.0.0.1:18080",
+            "upload_mode": "video_or_zip",
+            "connect_timeout_seconds": 3.0,
+            "read_timeout_seconds": 20.0,
+            "job_timeout_seconds": 20.0,
+            "poll_interval_seconds": 0.5,
+        },
         "text_style": {
             "font_size": 72,
             "top_margin": 88,
@@ -140,6 +149,15 @@ def mock_config():
             "require_leave_before_retrigger": True,
             "leave_min_cm": 180,
         },
+        "subtitle_sync": {
+            "enabled": False,
+            "base_url": "http://127.0.0.1:10061",
+            "expected_playlist_id": "huaihai-75-v1",
+            "expected_slide_count": 75,
+            "poll_interval_seconds": 1.0,
+            "request_timeout_seconds": 0.5,
+            "max_cached_age_seconds": 1.0,
+        },
     }
 
 
@@ -168,7 +186,7 @@ def patched_app_state(mock_config):
             mock_camera = MagicMock()
             mock_camera.get_frame.return_value = None
             mock_camera.get_frame_bytes.return_value = b"fake-jpeg"
-            mock_camera.status.return_value = {"running": True}
+            mock_camera.status.return_value = {"running": True, "opened": True, "has_frame": True}
             mock_camera.mjpeg_generator.return_value = iter([])
             app_state.APP_STATE["camera_driver"] = mock_camera
 
@@ -198,3 +216,12 @@ def patched_app_state(mock_config):
             app_state.APP_STATE["camera_driver"] = saved_camera
             app_state.APP_STATE["laser_driver"] = saved_laser
             app_state.APP_STATE["matting_service"] = saved_matting
+
+
+@pytest.fixture
+def test_client():
+    """FastAPI test client for the beauty inference service."""
+    from fastapi.testclient import TestClient
+    from beauty_service.beauty_inference_service import app, STATE
+    STATE.initialize()
+    return TestClient(app)

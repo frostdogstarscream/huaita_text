@@ -1,4 +1,4 @@
-"""FastAPI application: routes, lifespan, and server entry point."""
+﻿"""FastAPI application: routes, lifespan, and server entry point."""
 
 import threading
 from contextlib import asynccontextmanager
@@ -6,10 +6,11 @@ from io import BytesIO
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.staticfiles import StaticFiles as _StaticFiles
+from starlette.types import Scope
 
-from ali_segment_service import AliSegmentService
+from ali_segment_service import AliSegmentError, AliSegmentService
 from app_state import (
     APP_STATE,
     FRONTEND_DIR,
@@ -19,7 +20,7 @@ from app_state import (
     persist_laser_serial_port,
 )
 from background_manager import get_background_items
-from camera_driver import CameraDriver, CameraUnavailableError, FrameUnavailableError
+from camera_driver import CameraDriver, CameraFocusUnsupportedError, CameraUnavailableError, FrameUnavailableError
 from capture_manager import (
     CaptureBusyError,
     build_qr_image,
@@ -30,7 +31,18 @@ from capture_manager import (
     start_capture_task,
 )
 from laser_driver import LaserDriver
-from slogan_manager import get_rotation_snapshot, set_rotation_to_index
+from slogan_manager import get_rotation_snapshot, get_slogan_snapshot_by_sequence_no, set_rotation_to_index
+from subtitle_sync_client import SubtitleSyncClient, SubtitleSyncError
+
+
+# ---------------------------------------------------------------------------
+# Cache-busting: ensure browser always revalidates static assets
+# ---------------------------------------------------------------------------
+class _NoCacheStaticFiles(_StaticFiles):
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 # ---------------------------------------------------------------------------
@@ -41,7 +53,41 @@ ensure_kiosk_parchment_background()
 APP_STATE["camera_driver"] = CameraDriver(APP_STATE["config"]["camera"])
 APP_STATE["laser_driver"] = LaserDriver(APP_STATE["config"]["laser_trigger"])
 APP_STATE["laser_driver"].set_serial_port_persist_callback(persist_laser_serial_port)
-APP_STATE["matting_service"] = AliSegmentService(APP_STATE["config"])
+
+
+def _initialize_matting_service() -> Any:
+    cfg = APP_STATE["config"]
+    provider = str(cfg.get("matting_api", {}).get("provider", "ali_segment_body")).strip().lower()
+    if provider == "remote_tracked_matanyone":
+        from remote_matting_client import RemoteTrackedMattingClient
+
+        return RemoteTrackedMattingClient(cfg)
+    if provider == "tracked_matanyone":
+        from tracked_matting_service import TrackedMattingService
+
+        return TrackedMattingService(cfg)
+    return AliSegmentService(cfg)
+
+
+try:
+    APP_STATE["matting_service"] = _initialize_matting_service()
+except (AliSegmentError, ValueError, RuntimeError) as exc:
+    APP_STATE["matting_service"] = None
+    print(f"[WARN] Matting service initialization failed: {exc}")
+
+
+def _initialize_subtitle_sync_client() -> SubtitleSyncClient | None:
+    sync_cfg = APP_STATE["config"].get("subtitle_sync", {})
+    if not sync_cfg.get("enabled", False):
+        return None
+    try:
+        return SubtitleSyncClient(sync_cfg)
+    except Exception as exc:
+        print(f"[WARN] Subtitle sync client initialization failed: {exc}")
+        return None
+
+
+APP_STATE["subtitle_sync_client"] = _initialize_subtitle_sync_client()
 
 
 # ---------------------------------------------------------------------------
@@ -54,9 +100,26 @@ async def lifespan(_: FastAPI):
     APP_STATE["laser_trigger_running"] = True
     APP_STATE["laser_trigger_worker"] = threading.Thread(target=laser_trigger_loop, daemon=True)
     APP_STATE["laser_trigger_worker"].start()
+
+    sync_client = APP_STATE.get("subtitle_sync_client")
+    if sync_client:
+        APP_STATE["subtitle_sync_running"] = True
+        APP_STATE["subtitle_sync_worker"] = threading.Thread(
+            target=sync_client.poll_loop,
+            args=(lambda: APP_STATE["subtitle_sync_running"],),
+            daemon=True,
+            name="subtitle-sync",
+        )
+        APP_STATE["subtitle_sync_worker"].start()
+        print("[SubtitleSync] Background polling started.")
+
     try:
         yield
     finally:
+        APP_STATE["subtitle_sync_running"] = False
+        sync_worker = APP_STATE.get("subtitle_sync_worker")
+        if sync_worker and sync_worker.is_alive():
+            sync_worker.join(timeout=2)
         APP_STATE["laser_trigger_running"] = False
         worker = APP_STATE.get("laser_trigger_worker")
         if worker and worker.is_alive():
@@ -69,8 +132,8 @@ async def lifespan(_: FastAPI):
 # App / static mounts
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Huaita Four Background Composer", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-app.mount("/generated", StaticFiles(directory=OUTPUT_DIR), name="generated")
+app.mount("/static", _NoCacheStaticFiles(directory=FRONTEND_DIR), name="static")
+app.mount("/generated", _StaticFiles(directory=OUTPUT_DIR), name="generated")
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +143,7 @@ def serve_page(name: str) -> FileResponse:
     page = FRONTEND_DIR / name
     if not page.exists():
         raise HTTPException(status_code=404, detail=f"{name} not found")
-    return FileResponse(page)
+    return FileResponse(page, headers={"Cache-Control": "no-cache"})
 
 
 # ---------------------------------------------------------------------------
@@ -140,12 +203,52 @@ def camera_redirect() -> RedirectResponse:
 # ---------------------------------------------------------------------------
 @app.get("/api/health")
 def health() -> JSONResponse:
-    return JSONResponse({"ok": True, "camera": APP_STATE["camera_driver"].status()})
+    sync_client = APP_STATE.get("subtitle_sync_client")
+    subtitle_sync_status = None
+    if sync_client:
+        subtitle_sync_status = {
+            "enabled": True,
+            "connected": sync_client.status().get("connected", False),
+            "sequence_no": sync_client.status().get("sequence_no"),
+            "last_success_at": sync_client.status().get("last_success_at"),
+            "last_error": sync_client.status().get("last_error", ""),
+        }
+    else:
+        subtitle_sync_status = {"enabled": False}
+    return JSONResponse({
+        "ok": True,
+        "camera": APP_STATE["camera_driver"].status(),
+        "subtitle_sync": subtitle_sync_status,
+    })
 
 
 @app.get("/api/current-template")
 def current_template() -> JSONResponse:
-    snapshot = get_rotation_snapshot()
+    sync_cfg = APP_STATE["config"].get("subtitle_sync", {})
+    sync_client = APP_STATE.get("subtitle_sync_client")
+    subtitle_sync_info: dict[str, Any] = {"enabled": sync_cfg.get("enabled", False)}
+
+    if sync_cfg.get("enabled", False) and sync_client:
+        subtitle_sync_info["base_url"] = sync_cfg.get("base_url", "")
+        cached = sync_client.get_cached_state(max_age_seconds=10.0)
+        if cached:
+            try:
+                snapshot = get_slogan_snapshot_by_sequence_no(cached.sequence_no)
+                subtitle_sync_info.update({
+                    "available": True,
+                    "sequence_no": cached.sequence_no,
+                    "revision": cached.revision,
+                    "source": cached.source,
+                })
+            except ValueError:
+                snapshot = get_rotation_snapshot()
+                subtitle_sync_info["available"] = False
+        else:
+            snapshot = get_rotation_snapshot()
+            subtitle_sync_info["available"] = False
+    else:
+        snapshot = get_rotation_snapshot()
+
     return JSONResponse(
         {
             "template_id": f"slogan_{snapshot['index'] + 1:03d}",
@@ -155,6 +258,7 @@ def current_template() -> JSONResponse:
             "seconds_to_next": snapshot["seconds_to_next"],
             "rotation_start_time": snapshot["rotation_start_time"],
             "backgrounds": get_background_items(),
+            "subtitle_sync": subtitle_sync_info,
         }
     )
 
@@ -192,6 +296,12 @@ async def camera_page_active(request: Request) -> JSONResponse:
 
 @app.post("/api/sync-time")
 async def sync_time(request: Request) -> JSONResponse:
+    sync_cfg = APP_STATE["config"].get("subtitle_sync", {})
+    if sync_cfg.get("enabled", False):
+        raise HTTPException(
+            status_code=409,
+            detail="字幕同步已启用，有效字幕由投影服务器管理。"
+        )
     payload = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
     sequence_no = payload.get("sequence_no") if isinstance(payload, dict) else None
     if sequence_no in (None, ""):
@@ -219,8 +329,23 @@ async def sync_time(request: Request) -> JSONResponse:
     )
 
 
+@app.get("/api/subtitle-sync/status")
+def subtitle_sync_status() -> JSONResponse:
+    sync_client = APP_STATE.get("subtitle_sync_client")
+    if sync_client is None:
+        return JSONResponse({
+            "enabled": False,
+            "connected": False,
+            "message": "字幕同步未启用",
+        })
+    return JSONResponse(sync_client.status())
+
+
 @app.post("/api/capture")
 def capture() -> JSONResponse:
+    camera = APP_STATE.get("camera_driver")
+    if not camera or not camera.status().get("opened") or not camera.status().get("has_frame"):
+        raise HTTPException(status_code=400, detail="Camera is not ready")
     try:
         task = start_capture_task(source="manual")
     except CaptureBusyError as exc:
@@ -246,6 +371,46 @@ def latest_task_status() -> JSONResponse:
 @app.get("/api/camera/status")
 def camera_status() -> JSONResponse:
     return JSONResponse(APP_STATE["camera_driver"].status())
+
+
+@app.get("/api/camera/list")
+def camera_list() -> JSONResponse:
+    driver = APP_STATE["camera_driver"]
+    return JSONResponse({
+        "cameras": driver.list_cameras(),
+        "current_index": driver.selected_index,
+    })
+
+
+@app.post("/api/camera/select")
+async def camera_select(request: Request) -> JSONResponse:
+    data = await request.json()
+    idx = int(data.get("index", 0))
+    return JSONResponse(APP_STATE["camera_driver"].switch_to(idx))
+
+
+@app.get("/api/camera/focus")
+def camera_focus_status() -> JSONResponse:
+    return JSONResponse(APP_STATE["camera_driver"].focus_status())
+
+
+@app.post("/api/camera/focus")
+async def camera_focus_set(request: Request) -> JSONResponse:
+    data = await request.json()
+    auto_focus = data.get("auto_focus") if isinstance(data, dict) else None
+    focus_value = data.get("focus") if isinstance(data, dict) else None
+    try:
+        payload = APP_STATE["camera_driver"].set_focus(
+            auto_focus=None if auto_focus is None else bool(auto_focus),
+            focus=None if focus_value in (None, "") else int(focus_value),
+        )
+    except CameraFocusUnsupportedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except CameraUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid focus value") from exc
+    return JSONResponse(payload)
 
 
 @app.get("/api/camera/frame")
@@ -286,3 +451,4 @@ def run_server() -> None:
 
 if __name__ == "__main__":
     run_server()
+

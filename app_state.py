@@ -23,6 +23,7 @@ FINAL_DIR = APP_PATHS["final_dir"]
 CONFIG_PATH = APP_PATHS["config_path"]
 CAMERA_PAGE_HEARTBEAT_TIMEOUT_SECONDS = 3.0
 KIOSK_PARCHMENT_BG_NAME = "kiosk-parchment-portrait-bg.png"
+KIOSK_PARCHMENT_LANDSCAPE_BG_NAME = "kiosk-parchment-landscape-bg.png"
 
 APP_STATE: dict[str, Any] = {
     "config": load_config(),
@@ -39,12 +40,18 @@ APP_STATE: dict[str, Any] = {
     "laser_trigger_error": "",
     "camera_page_active": False,
     "camera_page_last_seen": 0.0,
+    "subtitle_sync_client": None,
+    "subtitle_sync_running": False,
+    "subtitle_sync_worker": None,
 }
 
 
 def persist_laser_serial_port(serial_port: str) -> None:
     APP_STATE["config"]["laser_trigger"]["serial_port"] = serial_port
-    save_config(APP_STATE["config"])
+    try:
+        save_config(APP_STATE["config"])
+    except Exception as exc:
+        APP_STATE["laser_trigger_error"] = f"Failed to persist laser serial port: {exc}"
 
 
 def ensure_directories() -> None:
@@ -53,9 +60,9 @@ def ensure_directories() -> None:
     FINAL_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def _write_fallback_kiosk_parchment_png(output_path: Path) -> None:
-    """Portrait 1080x1920 warm parchment with light noise — used only if bundled PNG is missing."""
-    w, h = 1080, 1920
+def _write_fallback_kiosk_parchment_png(output_path: Path, width: int = 1080, height: int = 1920) -> None:
+    """Warm parchment with light noise — used only if bundled PNG is missing."""
+    w, h = width, height
     rng = np.random.default_rng(42)
     row = np.linspace(0.0, 1.0, h, dtype=np.float32)[:, np.newaxis]
     col = np.linspace(0.0, 1.0, w, dtype=np.float32)[np.newaxis, :]
@@ -70,9 +77,14 @@ def _write_fallback_kiosk_parchment_png(output_path: Path) -> None:
 
 def ensure_kiosk_parchment_background() -> None:
     """Guarantees a readable PNG exists at frontend root (and mirrors under assets/)."""
-    primary = FRONTEND_DIR / KIOSK_PARCHMENT_BG_NAME
+    _ensure_single_parchment(KIOSK_PARCHMENT_BG_NAME, 1080, 1920)
+    _ensure_single_parchment(KIOSK_PARCHMENT_LANDSCAPE_BG_NAME, 1920, 1080)
+
+
+def _ensure_single_parchment(filename: str, width: int, height: int) -> None:
+    primary = FRONTEND_DIR / filename
     assets_dir = FRONTEND_DIR / "assets"
-    nested = assets_dir / KIOSK_PARCHMENT_BG_NAME
+    nested = assets_dir / filename
     min_bytes = 2048
 
     def usable(p: Path) -> bool:
@@ -98,7 +110,7 @@ def ensure_kiosk_parchment_background() -> None:
 
     assets_dir.mkdir(parents=True, exist_ok=True)
     try:
-        _write_fallback_kiosk_parchment_png(primary)
+        _write_fallback_kiosk_parchment_png(primary, width, height)
         shutil.copy2(primary, nested)
     except OSError:
         pass

@@ -10,3 +10,4 @@ alibabacloud_imageseg20191230
 alibabacloud_credentials
 alibabacloud_tea_openapi
 alibabacloud_tea_util
+PySide6==6.7.3

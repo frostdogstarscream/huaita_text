@@ -2,6 +2,7 @@
 
 import threading
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -80,7 +81,7 @@ class TestTaskManagement:
         patched_app_state["capture_busy"] = False
         task = start_capture_task(source="manual")
         assert "task_id" in task
-        assert task["status"] == "queued"
+        assert task["status"] in ("queued", "processing")  # daemon 线程可能已开始处理
         assert task["trigger_source"] == "manual"
 
         # Clean up: release the slot since process_capture_task runs in daemon thread
@@ -90,6 +91,118 @@ class TestTaskManagement:
         patched_app_state["capture_busy"] = True
         with pytest.raises(CaptureBusyError):
             start_capture_task(source="manual")
+
+    def test_process_capture_task_uses_tracked_pipeline_when_enabled(self, patched_app_state):
+        import capture_manager
+
+        patched_app_state["config"]["matting_api"]["provider"] = "tracked_matanyone"
+        patched_app_state["config"]["tracked_matting"] = {
+            "enabled": True,
+            "input_frame_count": 16,
+            "output_frame_indices": [3, 7, 10, 13],
+            "timeout_seconds": 20,
+        }
+
+        fake_capture_data = [
+            (Path("frame1.jpg"), "task_1"),
+            (Path("frame2.jpg"), "task_2"),
+            (Path("frame3.jpg"), "task_3"),
+            (Path("frame4.jpg"), "task_4"),
+        ]
+
+        with patch.object(capture_manager, "get_rotation_snapshot", return_value={"slogan": "test", "slogan_content": "test", "slogan_row": 1}), \
+             patch.object(capture_manager, "get_background_items", return_value=[{"id": "bg_001", "name": "bg", "path": "x"}]), \
+             patch.object(capture_manager, "select_rotating_background", return_value={"id": "bg_001", "name": "bg", "path": "x"}), \
+             patch.object(capture_manager, "_capture_tracked_sequence_frames", return_value={"capture_data": fake_capture_data, "capture_urls": ["u1", "u2"], "frame_paths": [], "video_path": Path("v.avi"), "output_indices": [0, 1, 2, 3], "shot_task_ids": ["a", "b", "c", "d"]}) as m_capture, \
+             patch.object(capture_manager, "_segment_tracked_sequence", return_value=([Image.new("RGBA", (10, 10), (0, 0, 0, 255))] * 4, ["c1", "c2", "c3", "c4"])) as m_segment, \
+             patch.object(capture_manager, "_segment_captures_parallel") as m_old_segment, \
+             patch.object(capture_manager, "_compose_capture_results", return_value=[{"ok": True}]) as m_compose:
+            capture_manager.process_capture_task("task_x")
+
+        assert m_capture.called
+        assert m_segment.called
+        assert not m_old_segment.called
+        assert m_compose.called
+
+    def test_process_capture_task_uses_remote_tracked_pipeline_when_enabled(self, patched_app_state):
+        import capture_manager
+
+        patched_app_state["config"]["matting_api"]["provider"] = "remote_tracked_matanyone"
+        patched_app_state["config"]["tracked_matting"] = {
+            "enabled": True,
+            "input_frame_count": 16,
+            "output_frame_indices": [3, 7, 10, 13],
+            "timeout_seconds": 20,
+        }
+        patched_app_state["config"]["remote_matting"] = {
+            "enabled": True,
+            "job_timeout_seconds": 20,
+        }
+        patched_app_state["matting_service"] = MagicMock()
+        patched_app_state["matting_service"].process_sequence.return_value = (
+            [{"image_url": "/generated/final/f1.jpg", "order": 1}] * 4,
+            {"remote_job_id": "job1", "upload_elapsed": 0.2, "remote_elapsed": 1.2, "download_elapsed": 0.3, "total_elapsed": 1.7},
+        )
+
+        fake_capture_data = [
+            (Path("frame1.jpg"), "task_1"),
+            (Path("frame2.jpg"), "task_2"),
+            (Path("frame3.jpg"), "task_3"),
+            (Path("frame4.jpg"), "task_4"),
+        ]
+        fake_sequence = {
+            "capture_data": fake_capture_data,
+            "capture_urls": ["u1", "u2", "u3", "u4"],
+            "frame_paths": [Path("f1.jpg"), Path("f2.jpg"), Path("f3.jpg"), Path("f4.jpg")],
+            "video_path": Path("v.avi"),
+            "output_indices": [0, 1, 2, 3],
+            "shot_task_ids": ["a", "b", "c", "d"],
+        }
+
+        with patch.object(capture_manager, "get_rotation_snapshot", return_value={"slogan": "test", "slogan_content": "test", "slogan_row": 1}), \
+             patch.object(capture_manager, "get_background_items", return_value=[{"id": "bg_001", "name": "bg", "path": "x"}]), \
+             patch.object(capture_manager, "select_rotating_background", return_value={"id": "bg_001", "name": "bg", "path": "x"}), \
+             patch.object(capture_manager, "_capture_tracked_sequence_frames", return_value=fake_sequence) as m_capture, \
+             patch.object(capture_manager, "_compose_capture_results") as m_compose:
+            capture_manager.process_capture_task("task_remote")
+
+        assert m_capture.called
+        assert not m_compose.called
+        assert patched_app_state["matting_service"].process_sequence.called
+
+    def test_modelscope_universal_timeout_is_long_enough_for_cpu_matting(self, patched_app_state):
+        import capture_manager
+
+        patched_app_state["config"]["matting_api"]["provider"] = "modelscope_universal"
+
+        assert capture_manager._resolve_capture_timeout_seconds() >= 180.0
+
+    def test_compose_capture_results_sets_error_reason_and_instance_metrics(self, patched_app_state):
+        import capture_manager
+
+        patched_app_state["matting_service"] = MagicMock()
+        patched_app_state["matting_service"].get_instance_metrics.return_value = {
+            "candidates_count": 2,
+            "visitors_count": 1,
+            "selected_score": 0.8,
+            "selected_mask_px": 12345,
+            "instance_elapsed_seconds": 0.12,
+        }
+
+        with patch.object(capture_manager, "compose_single_variant", return_value={"image_url": "/generated/final/x.jpg"}):
+            results = capture_manager._compose_capture_results(
+                task_id="t1",
+                subjects=[Image.new("RGBA", (8, 8), (0, 0, 0, 255))],
+                capture_data=[(Path("f1.jpg"), "t1_1")],
+                active_background={"id": "bg", "name": "bg", "path": "x"},
+                slogan="test",
+                slogan_row=1,
+                errors_by_idx={0: "instance_segmentation_failed: no suitable person instance"},
+            )
+
+        assert results[0]["error"] is True
+        assert "instance_segmentation_failed" in results[0]["error_reason"]
+        assert results[0]["instance_segmentation"]["visitors_count"] == 1
 
 
 class TestCameraPageActive:

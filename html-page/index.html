@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -41,6 +41,21 @@
             <div class="control-metric">
               <span class="control-metric__label">摄像头</span>
               <strong id="cameraText" class="control-metric__value">读取中…</strong>
+              <select id="cameraSelect" class="control-select"></select>
+              <div class="control-focus" id="cameraFocusPanel">
+                <div class="control-focus__head">
+                  <span class="control-metric__label">Focus</span>
+                  <label class="control-focus__toggle">
+                    <input id="autoFocusToggle" type="checkbox" />
+                    <span>Auto</span>
+                  </label>
+                </div>
+                <div class="control-focus__row">
+                  <input id="manualFocusSlider" class="control-focus__range" type="range" min="0" max="255" step="1" value="0" />
+                  <output id="manualFocusValue" class="control-focus__value">--</output>
+                </div>
+                <p id="focusStatusText" class="control-focus__status">Focus status loading</p>
+              </div>
             </div>
             <div class="control-metric">
               <span class="control-metric__label">激光触发</span>
@@ -52,6 +67,24 @@
             <p class="section-kicker">当前标语</p>
             <h3 id="currentSlogan" class="control-slogan">读取中…</h3>
             <p id="countdownText" class="page-note">--</p>
+          </article>
+
+          <article class="control-card" id="subtitleSyncCard" style="display:none;">
+            <p class="section-kicker">投影同步</p>
+            <div class="control-metric">
+              <span class="control-metric__label">连接状态</span>
+              <strong id="syncStatusText" class="control-metric__value">--</strong>
+            </div>
+            <div class="control-metric">
+              <span class="control-metric__label">远程序号</span>
+              <strong id="syncSequenceNo" class="control-metric__value">--</strong>
+            </div>
+            <div class="control-metric">
+              <span class="control-metric__label">最近同步</span>
+              <strong id="syncLastSuccess" class="control-metric__value">--</strong>
+            </div>
+            <p id="syncErrorText" class="page-note control-status" style="color:#c0392b;display:none;"></p>
+            <img id="syncSlidePreview" class="sync-slide-preview" src="" alt="当前投影标语" style="display:none;" />
           </article>
 
           <article class="control-card control-card--actions">

@@ -24,11 +24,24 @@ def get_background_items() -> list[dict[str, Any]]:
                 "path": relative_path,
                 "preview_url": web_path,
                 "order": order,
+                "orientation": item.get("orientation", "portrait"),
                 "person_layout": item.get("person_layout", {}),
                 "text_layout": item.get("text_layout", {}),
             }
         )
     return resolved
+
+
+def resolve_output_size(background_item: dict[str, Any]) -> tuple[int, int]:
+    """Return (width, height) for this background's orientation."""
+    cfg = APP_STATE["config"]
+    output_cfg = cfg.get("output", {})
+    orientation = background_item.get("orientation", "portrait")
+    orientations = output_cfg.get("orientations", {})
+    if orientation in orientations:
+        entry = orientations[orientation]
+        return (int(entry["width"]), int(entry["height"]))
+    return (int(output_cfg.get("width", 1080)), int(output_cfg.get("height", 1920)))
 
 
 def resolve_person_layout(background_item: dict[str, Any]) -> dict[str, Any]:

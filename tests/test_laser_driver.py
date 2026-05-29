@@ -27,9 +27,45 @@ def _make_laser_config(**overrides):
         "cooldown_ms": 5000,
         "require_leave_before_retrigger": True,
         "leave_min_cm": 180,
+        "keepalive_enabled": True,
+        "keepalive_no_data_seconds": 3.0,
+        "reconnect_no_data_seconds": 8.0,
     }
     cfg.update(overrides)
     return cfg
+
+
+class _FakeSerialConnection:
+    def __init__(self):
+        self.writes = []
+        self.closed = False
+
+    def reset_input_buffer(self):
+        pass
+
+    def reset_output_buffer(self):
+        pass
+
+    def read(self, _size):
+        return b""
+
+    def write(self, payload):
+        self.writes.append(bytes(payload))
+
+    def close(self):
+        self.closed = True
+
+
+class _FakeSerialModule:
+    PARITY_NONE = "N"
+    PARITY_EVEN = "E"
+    PARITY_ODD = "O"
+
+    def __init__(self, conn):
+        self.conn = conn
+
+    def Serial(self, **_kwargs):
+        return self.conn
 
 
 class TestFrameParsing:
@@ -85,6 +121,10 @@ class TestLaserFSM:
         status = driver.status()
         assert status["trigger_state"] == "MANUAL_ONLY"
         assert status["enabled"] is False
+        assert status["no_data_seconds"] is None
+        assert status["keepalive_count"] == 0
+        assert status["reconnect_count"] == 0
+        assert status["keepalive_enabled"] is True
 
     def test_disabled_laser_can_always_trigger(self):
         driver = LaserDriver(_make_laser_config(enabled=False))
@@ -103,6 +143,119 @@ class TestLaserFSM:
         driver.trigger_state = "PORT_UNAVAILABLE"
         driver.connected = False
         assert driver.trigger_state != "MANUAL_ONLY"
+
+
+class TestLaserWatchdog:
+    def test_open_serial_sends_start_continuous_command(self):
+        conn = _FakeSerialConnection()
+        driver = LaserDriver(_make_laser_config(serial_port="COM9"))
+
+        with (
+            patch("laser_driver.serial", _FakeSerialModule(conn)),
+            patch.object(driver, "_probe_connection", return_value=False),
+            patch("laser_driver.time.time", return_value=100.0),
+        ):
+            driver._open_serial()
+
+        assert conn.writes == [LaserDriver.START_CONTINUOUS_FAST]
+        assert driver.connected is True
+        assert driver.connection_started_at == 100.0
+        assert driver.last_start_command_time == 100.0
+
+    def test_no_data_before_threshold_does_not_keepalive_or_reconnect(self):
+        conn = _FakeSerialConnection()
+        driver = LaserDriver(_make_laser_config())
+        driver.connected = True
+        driver.serial_conn = conn
+        driver.connection_started_at = 98.0
+        driver.last_start_command_time = 98.0
+        driver.trigger_state = "IDLE"
+
+        with patch("laser_driver.time.time", return_value=100.0):
+            driver._handle_no_data()
+
+        assert conn.writes == []
+        assert driver.connected is True
+        assert driver.keepalive_count == 0
+        assert driver.reconnect_count == 0
+
+    def test_no_data_after_keepalive_threshold_resends_start_command(self):
+        conn = _FakeSerialConnection()
+        driver = LaserDriver(_make_laser_config())
+        driver.connected = True
+        driver.serial_conn = conn
+        driver.connection_started_at = 96.0
+        driver.last_start_command_time = 96.0
+        driver.trigger_state = "IDLE"
+
+        with patch("laser_driver.time.time", return_value=100.0):
+            driver._handle_no_data()
+
+        assert conn.writes == [LaserDriver.START_CONTINUOUS_FAST]
+        assert driver.connected is True
+        assert driver.keepalive_count == 1
+        assert driver.reconnect_count == 0
+        assert driver.last_start_command_time == 100.0
+
+    def test_no_data_after_reconnect_threshold_closes_serial(self):
+        conn = _FakeSerialConnection()
+        driver = LaserDriver(_make_laser_config())
+        driver.connected = True
+        driver.serial_conn = conn
+        driver.connection_started_at = 91.0
+        driver.last_start_command_time = 96.0
+        driver.trigger_state = "IDLE"
+
+        with patch("laser_driver.time.time", return_value=100.0):
+            driver._handle_no_data()
+
+        assert conn.writes == [LaserDriver.STOP_CONTINUOUS]
+        assert conn.closed is True
+        assert driver.connected is False
+        assert driver.serial_conn is None
+        assert driver.keepalive_count == 0
+        assert driver.reconnect_count == 1
+        assert "reconnecting" in driver.last_error
+
+    def test_keepalive_disabled_skips_resend_but_still_reconnects(self):
+        conn = _FakeSerialConnection()
+        driver = LaserDriver(_make_laser_config(keepalive_enabled=False))
+        driver.connected = True
+        driver.serial_conn = conn
+        driver.connection_started_at = 96.0
+        driver.last_start_command_time = 96.0
+        driver.trigger_state = "IDLE"
+
+        with patch("laser_driver.time.time", return_value=100.0):
+            driver._handle_no_data()
+
+        assert conn.writes == []
+        assert driver.connected is True
+        assert driver.keepalive_count == 0
+
+        with patch("laser_driver.time.time", return_value=105.0):
+            driver._handle_no_data()
+
+        assert conn.writes == [LaserDriver.STOP_CONTINUOUS]
+        assert driver.connected is False
+        assert driver.reconnect_count == 1
+
+    def test_status_reports_no_data_seconds_and_watchdog_counts(self):
+        driver = LaserDriver(_make_laser_config())
+        driver.connected = True
+        driver.connection_started_at = 96.0
+        driver.last_start_command_time = 97.0
+        driver.keepalive_count = 2
+        driver.reconnect_count = 1
+
+        with patch("laser_driver.time.time", return_value=100.0):
+            status = driver.status()
+
+        assert status["no_data_seconds"] == 4.0
+        assert status["last_start_command_time"] == 97.0
+        assert status["keepalive_count"] == 2
+        assert status["reconnect_count"] == 1
+        assert status["keepalive_enabled"] is True
 
 
 class TestLeaveBeforeRetrigger:

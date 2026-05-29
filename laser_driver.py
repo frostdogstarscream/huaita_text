@@ -52,6 +52,9 @@ class LaserDriver:
         self.cooldown_ms = int(laser_config.get("cooldown_ms", 5000))
         self.require_leave_before_retrigger = bool(laser_config.get("require_leave_before_retrigger", True))
         self.leave_min_cm = float(laser_config.get("leave_min_cm", laser_config.get("leave_min_mm", 1800) / 10))
+        self.keepalive_enabled = bool(laser_config.get("keepalive_enabled", True))
+        self.keepalive_no_data_seconds = float(laser_config.get("keepalive_no_data_seconds", 3.0))
+        self.reconnect_no_data_seconds = float(laser_config.get("reconnect_no_data_seconds", 8.0))
 
         self.running = False
         self.connected = False
@@ -66,6 +69,10 @@ class LaserDriver:
         self.checksum_actual: int | None = None
         self.checksum_ok: bool | None = None
         self.last_frame_time = 0.0
+        self.last_start_command_time = 0.0
+        self.connection_started_at = 0.0
+        self.keepalive_count = 0
+        self.reconnect_count = 0
         self.last_error = ""
         self.trigger_count = 0
         self.pending_trigger = False
@@ -171,6 +178,11 @@ class LaserDriver:
                     "message": "当前为手动拍照模式，请使用页面按钮触发拍照。",
                     "last_error": self.last_error,
                     "last_frame_time": self.last_frame_time,
+                    "no_data_seconds": None,
+                    "last_start_command_time": self.last_start_command_time,
+                    "keepalive_enabled": self.keepalive_enabled,
+                    "keepalive_count": self.keepalive_count,
+                    "reconnect_count": self.reconnect_count,
                     "measure_mode": self.measure_mode,
                     "trigger_count": self.trigger_count,
                 }
@@ -204,6 +216,11 @@ class LaserDriver:
                 "message": self._build_message_unlocked(countdown_remaining),
                 "last_error": self.last_error,
                 "last_frame_time": self.last_frame_time,
+                "no_data_seconds": self._no_data_seconds_unlocked(),
+                "last_start_command_time": self.last_start_command_time,
+                "keepalive_enabled": self.keepalive_enabled,
+                "keepalive_count": self.keepalive_count,
+                "reconnect_count": self.reconnect_count,
                 "measure_mode": self.measure_mode,
                 "trigger_count": self.trigger_count,
             }
@@ -224,6 +241,12 @@ class LaserDriver:
     def _countdown_remaining_display_unlocked(self) -> int:
         remaining = self._countdown_remaining_seconds_unlocked()
         return int(math.ceil(remaining)) if remaining > 0 else 0
+
+    def _no_data_seconds_unlocked(self) -> float | None:
+        start_time = self.last_frame_time or self.connection_started_at
+        if not start_time:
+            return None
+        return max(time.time() - start_time, 0.0)
 
     def _cancel_countdown_unlocked(self) -> None:
         self.countdown_started_at = None
@@ -320,6 +343,11 @@ class LaserDriver:
                 return True
         return False
 
+    def _send_start_continuous(self, conn: Any) -> None:
+        conn.write(self.START_CONTINUOUS_FAST)
+        with self.state_lock:
+            self.last_start_command_time = time.time()
+
     def _open_serial(self) -> None:
         if serial is None:
             raise LaserUnavailableError("pyserial is not installed")
@@ -350,7 +378,10 @@ class LaserDriver:
                 conn.reset_output_buffer()
                 if self.measure_mode != "continuous_fast_20hz":
                     raise LaserUnavailableError(f"Unsupported measure mode: {self.measure_mode}")
-                conn.write(self.START_CONTINUOUS_FAST)
+                with self.state_lock:
+                    self.connection_started_at = time.time()
+                    self.last_frame_time = 0.0
+                self._send_start_continuous(conn)
 
                 # 首帧只作为探测增强，不作为连接成功的硬性条件。
                 self._probe_connection(conn)
@@ -432,6 +463,8 @@ class LaserDriver:
             self.connected = False
 
     def _handle_no_data(self) -> None:
+        should_reconnect = False
+        should_keepalive = False
         with self.state_lock:
             if (
                 self.trigger_state == "COOLDOWN"
@@ -439,6 +472,41 @@ class LaserDriver:
                 and time.time() >= self.cooldown_until
             ):
                 self.trigger_state = "IDLE"
+            no_data_seconds = self._no_data_seconds_unlocked()
+            if no_data_seconds is None:
+                return
+            if (
+                self.reconnect_no_data_seconds > 0
+                and no_data_seconds >= self.reconnect_no_data_seconds
+            ):
+                self.reconnect_count += 1
+                self.last_error = f"no laser frames for {no_data_seconds:.1f}s; reconnecting"
+                self._cancel_countdown_unlocked()
+                should_reconnect = True
+            elif (
+                self.keepalive_enabled
+                and self.keepalive_no_data_seconds > 0
+                and no_data_seconds >= self.keepalive_no_data_seconds
+                and (
+                    not self.last_start_command_time
+                    or time.time() - self.last_start_command_time >= self.keepalive_no_data_seconds
+                )
+            ):
+                should_keepalive = True
+
+        if should_reconnect:
+            self._close_serial()
+            return
+
+        if should_keepalive and self.serial_conn is not None:
+            try:
+                self._send_start_continuous(self.serial_conn)
+                with self.state_lock:
+                    self.keepalive_count += 1
+                    self.last_error = f"resent continuous measurement after {no_data_seconds:.1f}s without frames"
+            except Exception as exc:
+                with self.state_lock:
+                    self.last_error = f"keepalive command failed: {exc}"
 
     def _drain_buffer(self) -> None:
         while len(self.buffer) >= self.RESULT_FRAME_LENGTH:

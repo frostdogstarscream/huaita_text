@@ -7,7 +7,13 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from image_composer import compose_single_variant, resize_cover, build_subject_cutout
+from image_composer import (
+    compose_single_variant,
+    resize_cover,
+    build_subject_cutout,
+    _place_subject_on_background,
+    effective_subject_bbox,
+)
 
 
 class TestResizeCover:
@@ -114,6 +120,50 @@ class TestComposeSingleVariant:
             assert result["image_url"].startswith("/generated/final/")
         finally:
             image_composer.RESOURCE_DIR = saved_resource
+
+    def test_subject_placement_limits_width_for_wide_cutouts(self, patched_app_state, tmp_path):
+        import image_composer
+
+        bg_img = Image.new("RGB", (1080, 1920), (10, 20, 30))
+        temp_bg = tmp_path / "test_bg_wide.jpg"
+        bg_img.save(temp_bg)
+
+        subject = Image.new("RGBA", (1000, 500), (0, 0, 0, 0))
+        for y in range(0, 500):
+            for x in range(0, 1000):
+                subject.putpixel((x, y), (220, 220, 220, 255))
+
+        bg_item = dict(patched_app_state["config"]["background_set"]["items"][0])
+        bg_item["path"] = str(temp_bg.relative_to(tmp_path))
+        bg_item["person_layout"] = {
+            "target_height_ratio": 0.90,
+            "max_width_ratio": 0.80,
+            "center_x_ratio": 0.50,
+            "center_y_offset": 0,
+            "bottom_margin": 0,
+        }
+        saved_resource = image_composer.RESOURCE_DIR
+        try:
+            image_composer.RESOURCE_DIR = tmp_path
+            result = _place_subject_on_background(subject, bg_item, (1080, 1920))
+        finally:
+            image_composer.RESOURCE_DIR = saved_resource
+
+        arr = np.array(result.convert("RGB"))
+        subject_pixels = np.all(arr == (220, 220, 220), axis=2)
+        ys, xs = np.where(subject_pixels)
+        assert len(xs) > 0
+        assert int(xs.min()) >= 100
+        assert int(xs.max()) <= 980
+
+    def test_effective_subject_bbox_ignores_low_alpha_specks(self):
+        arr = np.zeros((100, 100, 4), dtype=np.uint8)
+        arr[:, :, :3] = 120
+        arr[30:70, 30:70, 3] = 255
+        arr[2:4, 2:4, 3] = 8
+        subject = Image.fromarray(arr, "RGBA")
+
+        assert effective_subject_bbox(subject, alpha_threshold=16) == (30, 30, 70, 70)
 
 
 class TestBuildSubjectCutout:

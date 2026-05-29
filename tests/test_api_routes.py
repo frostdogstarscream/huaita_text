@@ -132,16 +132,23 @@ class TestAPIRoutes:
 
 class TestCaptureEndpoint:
     def test_capture_creates_task(self, client, patched_app_state):
+        from unittest.mock import MagicMock
         patched_app_state["capture_busy"] = False
+        patched_app_state["camera_driver"] = MagicMock()
+        patched_app_state["camera_driver"].status.return_value = {"running": True, "opened": True, "has_frame": True}
+        patched_app_state["camera_driver"].get_frame.return_value = None
         response = client.post("/api/capture")
         # Will be 200 (queued) or 409 (if somehow busy)
         assert response.status_code in (200, 409)
         if response.status_code == 200:
             data = response.json()
             assert "task_id" in data
-            assert data["status"] == "queued"
+            assert data["status"] in ("queued", "processing")
 
     def test_capture_busy_returns_409(self, client, patched_app_state):
+        from unittest.mock import MagicMock
         patched_app_state["capture_busy"] = True
+        patched_app_state["camera_driver"] = MagicMock()
+        patched_app_state["camera_driver"].status.return_value = {"running": True, "opened": True, "has_frame": True}
         response = client.post("/api/capture")
         assert response.status_code == 409

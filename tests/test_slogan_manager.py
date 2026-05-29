@@ -5,6 +5,7 @@ import pytest
 from slogan_manager import (
     _normalize_slogan_lookup_key,
     get_rotation_snapshot,
+    get_slogan_snapshot_by_sequence_no,
     normalize_slogan_lines_to_row_count,
     resolve_text_tuning,
     set_rotation_to_index,
@@ -152,3 +153,33 @@ class TestNormalizeSloganLookupKey:
         result = _normalize_slogan_lookup_key("只要还有一个人活着\n就要守住阵地")
         assert "\n" not in result
         assert "  " not in result
+
+
+class TestGetSloganSnapshotBySequenceNo:
+    def test_returns_first_slogan(self, patched_app_state):
+        snapshot = get_slogan_snapshot_by_sequence_no(1)
+        assert snapshot["sequence_no"] == 1
+        assert snapshot["slogan"] == "测试标语一"
+        assert snapshot["index"] == 0
+
+    def test_returns_last_slogan(self, patched_app_state):
+        snapshot = get_slogan_snapshot_by_sequence_no(3)
+        assert snapshot["sequence_no"] == 3
+        assert snapshot["index"] == 2
+
+    def test_returns_multiline_slogan(self, patched_app_state):
+        snapshot = get_slogan_snapshot_by_sequence_no(3)
+        assert snapshot["slogan_row"] == 2
+
+    def test_raises_for_zero(self, patched_app_state):
+        with pytest.raises(ValueError, match="out of range"):
+            get_slogan_snapshot_by_sequence_no(0)
+
+    def test_raises_for_exceeding_count(self, patched_app_state):
+        with pytest.raises(ValueError, match="out of range"):
+            get_slogan_snapshot_by_sequence_no(4)
+
+    def test_does_not_modify_rotation_start_time(self, patched_app_state):
+        original = patched_app_state["config"]["rotation"]["rotation_start_time"]
+        get_slogan_snapshot_by_sequence_no(2)
+        assert patched_app_state["config"]["rotation"]["rotation_start_time"] == original
